@@ -4,8 +4,6 @@ from flask import Flask, request, jsonify, abort, make_response
 from flask_cors import CORS
 from datetime import datetime, timezone
 
-ONE_MONTH = 60 * 60 * 24 * 30  # 2592000 seconds
-
 app = Flask(__name__)
 CORS(app)
 
@@ -33,8 +31,13 @@ def make_note(title, content):
 # GET /notes - list all notes
 @app.route("/notes", methods=["GET"])
 def get_notes():
-    resp = make_response(jsonify(list(notes.values())), 200)
-    resp.headers["Cache-Control"] = f"private, max-age={ONE_MONTH}"
+    data = list(notes.values())
+    etag = hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()
+    if request.headers.get("If-None-Match") == etag:
+        return "", 304
+    resp = make_response(jsonify(data), 200)
+    resp.headers["Cache-Control"] = "private, max-age=5"
+    resp.headers["ETag"] = etag
     return resp
 
 
@@ -48,7 +51,7 @@ def get_note(note_id):
     if request.headers.get("If-None-Match") == etag:
         return "", 304
     resp = make_response(jsonify(note), 200)
-    resp.headers["Cache-Control"] = "private, max-age=30"
+    resp.headers["Cache-Control"] = "private, max-age=5"
     resp.headers["ETag"] = etag
     return resp
 
