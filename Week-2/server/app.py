@@ -1,12 +1,20 @@
+import hashlib
+import json
 from flask import Flask, request, jsonify, abort, make_response
+from flask_cors import CORS
 from datetime import datetime, timezone
 
 ONE_MONTH = 60 * 60 * 24 * 30  # 2592000 seconds
 
 app = Flask(__name__)
+CORS(app)
 
 notes = {}
 next_id = 1
+
+
+def note_etag(note):
+    return hashlib.md5(json.dumps(note, sort_keys=True).encode()).hexdigest()
 
 
 def make_note(title, content):
@@ -36,8 +44,12 @@ def get_note(note_id):
     note = notes.get(note_id)
     if note is None:
         abort(404, description="Note not found")
+    etag = note_etag(note)
+    if request.headers.get("If-None-Match") == etag:
+        return "", 304
     resp = make_response(jsonify(note), 200)
-    resp.headers["Cache-Control"] = f"private, max-age={ONE_MONTH}"
+    resp.headers["Cache-Control"] = "private, max-age=30"
+    resp.headers["ETag"] = etag
     return resp
 
 

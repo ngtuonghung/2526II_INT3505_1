@@ -1,0 +1,180 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f4f4f5;
+  color: #18181b;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ── Form ── */
+.note-form {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.note-form h2 { font-size: 1rem; font-weight: 600; }
+
+.note-form input,
+.note-form textarea {
+  width: 100%;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  padding: .6rem .8rem;
+  font-size: .95rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.note-form input:focus,
+.note-form textarea:focus { border-color: #6366f1; }
+
+.note-form button {
+  align-self: flex-end;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: .55rem 1.2rem;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.note-form button:hover { background: #4f46e5; }
+
+/* ── Notes list ── */
+#notes-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.note-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  position: relative;
+}
+
+.note-card .note-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: .3rem;
+}
+
+.note-card .note-content {
+  font-size: .92rem;
+  color: #52525b;
+  white-space: pre-wrap;
+  margin-bottom: .6rem;
+}
+
+.note-card .note-time {
+  font-size: .76rem;
+  color: #a1a1aa;
+}
+
+.note-card .card-actions {
+  position: absolute;
+  top: .9rem;
+  right: 1rem;
+  display: flex;
+  gap: .5rem;
+}
+
+.card-actions button {
+  border: none;
+  border-radius: 6px;
+  padding: .3rem .7rem;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.btn-edit   { background: #e0e7ff; color: #4338ca; }
+.btn-edit:hover { background: #c7d2fe; }
+.btn-delete { background: #fee2e2; color: #dc2626; }
+.btn-delete:hover { background: #fecaca; }
+
+/* ── Modal ── */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.5rem;
+  width: min(95%, 480px);
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.modal h2 { font-size: 1.05rem; font-weight: 600; }
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  padding: .6rem .8rem;
+  font-size: .95rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.modal input:focus,
+.modal textarea:focus { border-color: #6366f1; }
+
+.modal-actions { display: flex; justify-content: flex-end; gap: .6rem; }
+
+.modal-actions button {
+  border: none;
+  border-radius: 8px;
+  padding: .5rem 1.1rem;
+  font-size: .9rem;
+  cursor: pointer;
+}
+
+.btn-cancel { background: #f4f4f5; color: #3f3f46; }
+.btn-cancel:hover { background: #e4e4e7; }
+.btn-save   { background: #6366f1; color: #fff; }
+.btn-save:hover { background: #4f46e5; }
+
+.empty-state {
+  text-align: center;
+  color: #a1a1aa;
+  padding: 2rem 0;
+  font-size: .95rem;
+}
