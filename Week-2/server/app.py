@@ -28,18 +28,13 @@ REFRESH_TOKEN_EXPIRY_DAYS = 7
 # Set COOKIE_SECURE=true in production (requires HTTPS)
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 
-# ── Users: username -> SHA-256 hex-digest of password ─────────────────────────
-# To generate:  python3 -c "import hashlib; print(hashlib.sha256(b'yourpassword').hexdigest())"
 USERS = {
-    # Password: "admin123"  ← change this before deploying
-    "admin": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "admin": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
 }
 
 notes = {}
 next_id = 1
 
-# ── Refresh token store: opaque_token -> {username, expires_at} ───────────────
-# In production, replace with a persistent database.
 refresh_tokens = {}
 
 
