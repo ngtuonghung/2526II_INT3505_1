@@ -1,10 +1,11 @@
-const API = 'http://localhost:5000';
+const API = 'http://127.0.0.1:5000';
 let editingId = null;
 
-// JWT stored in memory — lost on refresh (by design for REST statelessness).
+// Access token lives in memory only. Refresh token lives in an HttpOnly
+// cookie managed by the browser — JS never touches it directly.
 let authToken = null;
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
+// ── DOM refs ──────────────────────────────────────────────────────────────────
 const loginPage   = document.getElementById('login-page');
 const loginForm   = document.getElementById('login-form');
 const loginError  = document.getElementById('login-error');
@@ -32,6 +33,44 @@ function showApp() {
   appDiv.style.display = 'block';
 }
 
+// Sends the HttpOnly refresh_token cookie to get a new access token.
+// Returns true on success.
+async function tryRefresh() {
+  const res = await fetch(`${API}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include', // send the refresh_token cookie
+  });
+  if (!res.ok) return false;
+  const { access_token } = await res.json();
+  authToken = access_token;
+  return true;
+}
+
+// Wraps a fetch call. On 401, attempts one silent token refresh then retries.
+// Returns the Response, or null if the user must log in again.
+async function apiCall(requestFn) {
+  let res = await requestFn();
+  if (res.status === 401) {
+    if (await tryRefresh()) {
+      res = await requestFn(); // retry with the fresh access token
+    } else {
+      showLogin('Session expired. Please sign in again.');
+      return null;
+    }
+  }
+  return res;
+}
+
+// ── Session restore on page load ──────────────────────────────────────────────
+async function checkSession() {
+  if (await tryRefresh()) {
+    showApp();
+    loadNotes();
+  } else {
+    showLogin();
+  }
+}
+
 // ── Login form ────────────────────────────────────────────────────────────────
 loginForm.addEventListener('submit', async e => {
   e.preventDefault();
@@ -42,6 +81,7 @@ loginForm.addEventListener('submit', async e => {
   const res = await fetch(`${API}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // receive the refresh_token cookie
     body: JSON.stringify({ username, password }),
   });
 
@@ -51,15 +91,19 @@ loginForm.addEventListener('submit', async e => {
     return;
   }
 
-  const { token } = await res.json();
-  authToken = token;
+  const { access_token } = await res.json();
+  authToken = access_token;
   loginForm.reset();
   showApp();
   loadNotes();
 });
 
 // ── Logout ────────────────────────────────────────────────────────────────────
-document.getElementById('btn-logout').addEventListener('click', () => {
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include', // send cookie so server can invalidate it
+  });
   showLogin();
 });
 
@@ -72,16 +116,7 @@ function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Redirects to login on 401.
-async function handleResponse(res) {
-  if (res.status === 401) {
-    showLogin('Session expired. Please sign in again.');
-    return null;
-  }
-  return res;
-}
-
-// ── Notes rendering ──────────────────────────────────────────────────────────
+// ── Notes rendering ───────────────────────────────────────────────────────────
 function renderNotes(notes) {
   if (!notes.length) {
     notesList.innerHTML = '<p class="empty-state">No notes yet. Create one above!</p>';
@@ -101,8 +136,8 @@ function renderNotes(notes) {
 }
 
 async function loadNotes() {
-  const res = await fetch(`${API}/notes`, { headers: authHeaders() });
-  if (!await handleResponse(res)) return;
+  const res = await apiCall(() => fetch(`${API}/notes`, { headers: authHeaders() }));
+  if (!res) return;
   renderNotes(await res.json());
 }
 
@@ -111,12 +146,12 @@ createForm.addEventListener('submit', async e => {
   e.preventDefault();
   const title   = document.getElementById('new-title').value.trim();
   const content = document.getElementById('new-content').value.trim();
-  const res = await fetch(`${API}/notes`, {
+  const res = await apiCall(() => fetch(`${API}/notes`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ title, content }),
-  });
-  if (!await handleResponse(res)) return;
+  }));
+  if (!res) return;
   createForm.reset();
   loadNotes();
 });
@@ -143,12 +178,12 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   const title   = editTitle.value.trim();
   const content = editContent.value.trim();
   if (!title) { editTitle.focus(); return; }
-  const res = await fetch(`${API}/notes/${editingId}`, {
+  const res = await apiCall(() => fetch(`${API}/notes/${editingId}`, {
     method: 'PATCH',
     headers: authHeaders(),
     body: JSON.stringify({ title, content }),
-  });
-  if (!await handleResponse(res)) return;
+  }));
+  if (!res) return;
   editModal.classList.remove('open');
   loadNotes();
 });
@@ -156,14 +191,14 @@ document.getElementById('modal-save').addEventListener('click', async () => {
 // ── Delete note ───────────────────────────────────────────────────────────────
 async function deleteNote(id) {
   if (!confirm('Delete this note?')) return;
-  const res = await fetch(`${API}/notes/${id}`, {
+  const res = await apiCall(() => fetch(`${API}/notes/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
-  });
-  if (!await handleResponse(res)) return;
+  }));
+  if (!res) return;
   loadNotes();
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
-showLogin();
+checkSession();
 
