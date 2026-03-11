@@ -7,8 +7,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>My Notes</h1>
+
+  <!-- ── Login page ── -->
+  <div class="login-backdrop" id="login-page">
+    <div class="login-card">
+      <h1>Notes</h1>
+      <p class="login-subtitle">Sign in to continue</p>
+      <form id="login-form">
+        <input type="text"     id="login-username" placeholder="Username" autocomplete="username" required />
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" required />
+        <p class="login-error" id="login-error"></p>
+        <button type="submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Main app (hidden until authenticated) ── -->
+  <div class="container" id="app" style="display:none">
+    <div class="app-header">
+      <h1>My Notes</h1>
+      <button class="btn-logout" id="btn-logout">Sign out</button>
+    </div>
 
     <form class="note-form" id="create-form">
       <h2>New note</h2>
