@@ -33,6 +33,7 @@
       <h2>New note</h2>
       <input type="text" id="new-title" placeholder="Title" required />
       <textarea id="new-content" rows="3" placeholder="Content (optional)"></textarea>
+      <input type="file" id="new-image" accept="image/*" />
       <button type="submit">Add note</button>
     </form>
 
@@ -45,6 +46,8 @@
       <h2>Edit note</h2>
       <input type="text" id="edit-title" placeholder="Title" />
       <textarea id="edit-content" rows="4" placeholder="Content"></textarea>
+      <img id="edit-image-preview" style="display:none; max-width:100%; margin-bottom:8px;" />
+      <input type="file" id="edit-image" accept="image/*" />
       <div class="modal-actions">
         <button class="btn-cancel" id="modal-cancel">Cancel</button>
         <button class="btn-save"   id="modal-save">Save</button>

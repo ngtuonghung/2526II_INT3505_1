@@ -1,6 +1,6 @@
 // Constants
 const API       = 'http://127.0.0.1:5000';
-const NOTES_API = `${API}/api/v1/notes`;
+const NOTES_API = `${API}/api/v2/notes`;
 const AUTH_API  = `${API}/auth`;
 
 // State
@@ -16,13 +16,20 @@ const loginError  = document.getElementById('login-error');
 const appDiv      = document.getElementById('app');
 const notesList   = document.getElementById('notes-list');
 const createForm  = document.getElementById('create-form');
-const editModal   = document.getElementById('edit-modal');
-const editTitle   = document.getElementById('edit-title');
-const editContent = document.getElementById('edit-content');
+const editModal      = document.getElementById('edit-modal');
+const editTitle      = document.getElementById('edit-title');
+const editContent    = document.getElementById('edit-content');
+const editImage      = document.getElementById('edit-image');
+const editImgPreview = document.getElementById('edit-image-preview');
+const newImage       = document.getElementById('new-image');
 
 // Auth helpers
-function authHeaders(extra = {}) {
-  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`, ...extra };
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` };
+}
+
+function bearerHeader() {
+  return { 'Authorization': `Bearer ${authToken}` };
 }
 
 function showLogin(errorMsg = '') {
@@ -121,26 +128,38 @@ function escHtml(str) {
 }
 
 // Notes rendering
+async function loadNoteImage(noteId, imgEl) {
+  const res = await apiCall(() => fetch(`${NOTES_API}/${noteId}/image`, { headers: bearerHeader() }));
+  if (!res || !res.ok) return;
+  const blob = await res.blob();
+  imgEl.src = URL.createObjectURL(blob);
+  imgEl.style.display = 'block';
+}
+
 function renderNotes(notes) {
   if (!notes.length) {
     notesList.innerHTML = '<p class="empty-state">No notes yet. Create one above!</p>';
     return;
   }
   notesList.innerHTML = notes.map(n => `
-    <div class="note-card" data-id="${n.id}">
+    <div class="note-card" data-id="${n.id}" data-has-image="${n.has_image || false}">
       <div class="card-actions">
         <button class="btn-edit"   onclick="openEdit(${n.id})">Edit</button>
         <button class="btn-delete" onclick="deleteNote(${n.id})">Delete</button>
       </div>
       <div class="note-title">${escHtml(n.title)}</div>
       <div class="note-content">${escHtml(n.content || '')}</div>
+      ${n.has_image ? `<img class="note-image" id="note-img-${n.id}" style="display:none; max-width:100%; margin-top:8px;" />` : ''}
       <div class="note-time">${formatTime(n.time)}</div>
     </div>
   `).join('');
+  notes.filter(n => n.has_image).forEach(n =>
+    loadNoteImage(n.id, document.getElementById(`note-img-${n.id}`))
+  );
 }
 
 async function loadNotes() {
-  const res = await apiCall(() => fetch(NOTES_API, { headers: authHeaders() }));
+  const res = await apiCall(() => fetch(NOTES_API, { headers: bearerHeader() }));
   if (!res) return;
   renderNotes(await res.json());
 }
@@ -148,12 +167,14 @@ async function loadNotes() {
 // Create note
 createForm.addEventListener('submit', async e => {
   e.preventDefault();
-  const title   = document.getElementById('new-title').value.trim();
-  const content = document.getElementById('new-content').value.trim();
+  const fd = new FormData();
+  fd.append('title',   document.getElementById('new-title').value.trim());
+  fd.append('content', document.getElementById('new-content').value.trim());
+  if (newImage.files[0]) fd.append('image', newImage.files[0]);
   const res = await apiCall(() => fetch(NOTES_API, {
     method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ title, content }),
+    headers: bearerHeader(),
+    body: fd,
   }));
   if (!res) return;
   createForm.reset();
@@ -166,6 +187,13 @@ function openEdit(id) {
   editingId = id;
   editTitle.value   = card.querySelector('.note-title').textContent;
   editContent.value = card.querySelector('.note-content').textContent;
+  editImage.value   = '';
+  if (card.dataset.hasImage === 'true') {
+    loadNoteImage(id, editImgPreview);
+  } else {
+    editImgPreview.style.display = 'none';
+    editImgPreview.src = '';
+  }
   editModal.classList.add('open');
   editTitle.focus();
 }
@@ -182,10 +210,14 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   const title   = editTitle.value.trim();
   const content = editContent.value.trim();
   if (!title) { editTitle.focus(); return; }
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('content', content);
+  if (editImage.files[0]) fd.append('image', editImage.files[0]);
   const res = await apiCall(() => fetch(`${NOTES_API}/${editingId}`, {
     method: 'PATCH',
-    headers: authHeaders(),
-    body: JSON.stringify({ title, content }),
+    headers: bearerHeader(),
+    body: fd,
   }));
   if (!res) return;
   editModal.classList.remove('open');
@@ -197,7 +229,7 @@ async function deleteNote(id) {
   if (!confirm('Delete this note?')) return;
   const res = await apiCall(() => fetch(`${NOTES_API}/${id}`, {
     method: 'DELETE',
-    headers: authHeaders(),
+    headers: bearerHeader(),
   }));
   if (!res) return;
   loadNotes();
