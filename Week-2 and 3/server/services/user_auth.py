@@ -6,19 +6,20 @@ from flask import Blueprint, request, jsonify, abort, make_response
 from datetime import datetime, timezone, timedelta
 import jwt
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "2526II_INT3505_1_SECRET")
+JWT_SECRET = os.environ.get("JWT_SECRET", "2526II_INT3505_1_SECRET")  # MUST override via env in production
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRY_MINUTES = 15
 REFRESH_TOKEN_EXPIRY_DAYS = 7
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 
+# Passwords stored as SHA-256 hex digests
 USERS = {
     "admin": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
 }
 
-refresh_tokens = {}
+refresh_tokens = {}  # In-memory only — cleared on every server restart
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+auth_bp = Blueprint("auth", __name__)
 
 
 def issue_access_token(username):
@@ -41,7 +42,7 @@ def set_refresh_cookie(resp, token):
         secure=COOKIE_SECURE,
         samesite="Strict",
         max_age=REFRESH_TOKEN_EXPIRY_DAYS * 86400,
-        path="/auth",
+        path="/auth",  # limits cookie scope to /auth routes only
     )
 
 
@@ -73,7 +74,8 @@ def login():
     if not username or not password:
         abort(400, description="'username' and 'password' are required")
     stored_hash = USERS.get(username)
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    password_hash = password  # pre-hashed SHA-256 from client
+    # Vulnerable to timing attack — use hmac.compare_digest() in production
     if stored_hash is None or password_hash != stored_hash:
         abort(401, description="Invalid credentials")
     resp = make_response(jsonify({"access_token": issue_access_token(username)}), 200)
@@ -92,6 +94,8 @@ def refresh():
     if datetime.now(timezone.utc) > entry["expires_at"]:
         refresh_tokens.pop(token, None)
         abort(401, description="Refresh token expired")
+    # Refresh token is not rotated — reuse until expiry
+    # Refresh token is not rotated — reused until expiry
     return jsonify({"access_token": issue_access_token(entry["username"])}), 200
 
 

@@ -9,11 +9,10 @@ app = Flask(__name__)
 
 CORS_ORIGINS = [
     "http://127.0.0.1:5500",
-    "http://127.0.0.1:3000",
 ]
 CORS(app, supports_credentials=True, origins=CORS_ORIGINS)
 
-app.register_blueprint(auth_bp)
+app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(notes_bp_v1, url_prefix="/api/v1/notes")
 app.register_blueprint(notes_bp_v2, url_prefix="/api/v2/notes")
 

@@ -27,6 +27,11 @@
     const AUTH_API = `${API}/auth`;
     const ACCESS_TOKEN_KEY = 'access_token';
 
+    async function sha256(message) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     const loginPage  = document.getElementById('login-page');
     const loginForm  = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
@@ -59,11 +64,12 @@
       const password = document.getElementById('login-password').value;
       loginError.textContent = '';
 
+      const passwordHash = await sha256(password);
       const res = await fetch(`${AUTH_API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password: passwordHash }),
       });
 
       if (!res.ok) {
