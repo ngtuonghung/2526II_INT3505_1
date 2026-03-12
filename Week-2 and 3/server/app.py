@@ -6,26 +6,20 @@ from functools import wraps
 from flask import Flask, request, jsonify, abort, make_response
 from flask_cors import CORS
 from datetime import datetime, timezone, timedelta
-import jwt  # PyJWT
+import jwt
 
 app = Flask(__name__)
-# credentials=True is required for the refresh-token HttpOnly cookie.
-# Origins must match the exact page origin (wildcards are disallowed with credentials).
-DEFAULT_CORS_ORIGINS = [
+
+CORS_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://127.0.0.1:3000",
 ]
-CORS_ORIGINS = [
-    o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()
-] or DEFAULT_CORS_ORIGINS
 CORS(app, supports_credentials=True, origins=CORS_ORIGINS)
 
-# ── Token config ──────────────────────────────────────────────────────────────
 JWT_SECRET = os.environ.get("JWT_SECRET", "2526II_INT3505_1_SECRET")
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRY_MINUTES = 15
 REFRESH_TOKEN_EXPIRY_DAYS = 7
-# Set COOKIE_SECURE=true in production (requires HTTPS)
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 
 USERS = {
@@ -42,7 +36,6 @@ def note_etag(note):
     return hashlib.md5(json.dumps(note, sort_keys=True).encode()).hexdigest()
 
 
-# ── Token helpers ─────────────────────────────────────────────────────────────
 def issue_access_token(username):
     exp = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRY_MINUTES)
     return jwt.encode({"sub": username, "exp": exp}, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -63,12 +56,11 @@ def set_refresh_cookie(resp, token):
         secure=COOKIE_SECURE,
         samesite="Strict",
         max_age=REFRESH_TOKEN_EXPIRY_DAYS * 86400,
-        path="/auth",  # cookie only sent to /auth/* routes
+        path="/auth",
     )
 
 
 def require_auth(f):
-    """Decorator: validates Bearer JWT from Authorization header; aborts 401 otherwise."""
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
@@ -82,6 +74,7 @@ def require_auth(f):
         except jwt.InvalidTokenError:
             abort(401, description="Invalid token")
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -98,7 +91,6 @@ def make_note(title, content):
     return note
 
 
-# POST /auth/login - verify credentials, return access token + set refresh cookie
 @app.route("/auth/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True)
@@ -117,7 +109,6 @@ def login():
     return resp
 
 
-# POST /auth/refresh - exchange a valid refresh-token cookie for a new access token
 @app.route("/auth/refresh", methods=["POST"])
 def refresh():
     token = request.cookies.get("refresh_token")
@@ -132,19 +123,24 @@ def refresh():
     return jsonify({"access_token": issue_access_token(entry["username"])}), 200
 
 
-# POST /auth/logout - invalidate the refresh token and clear the cookie
 @app.route("/auth/logout", methods=["POST"])
 def logout():
     token = request.cookies.get("refresh_token")
     if token:
         refresh_tokens.pop(token, None)
     resp = make_response(jsonify({"message": "Logged out"}), 200)
-    resp.set_cookie("refresh_token", "", max_age=0, httponly=True,
-                    secure=COOKIE_SECURE, samesite="Strict", path="/auth")
+    resp.set_cookie(
+        "refresh_token",
+        "",
+        max_age=0,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="Strict",
+        path="/auth",
+    )
     return resp
 
 
-# GET /notes - list all notes
 @app.route("/notes", methods=["GET"])
 @require_auth
 def get_notes():
@@ -158,7 +154,6 @@ def get_notes():
     return resp
 
 
-# GET /notes/<id> - get a single note
 @app.route("/notes/<int:note_id>", methods=["GET"])
 @require_auth
 def get_note(note_id):
@@ -174,7 +169,6 @@ def get_note(note_id):
     return resp
 
 
-# POST /notes - create a new note
 @app.route("/notes", methods=["POST"])
 @require_auth
 def create_note():
@@ -189,7 +183,6 @@ def create_note():
     return jsonify(note), 201
 
 
-# PATCH /notes/<id> - partially update a note
 @app.route("/notes/<int:note_id>", methods=["PATCH"])
 @require_auth
 def patch_note(note_id):
@@ -210,7 +203,6 @@ def patch_note(note_id):
     return jsonify(note), 200
 
 
-# DELETE /notes/<id> - delete a note
 @app.route("/notes/<int:note_id>", methods=["DELETE"])
 @require_auth
 def delete_note(note_id):
