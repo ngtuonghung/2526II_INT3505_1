@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Notes</title>
+  <title>Notes – Sign in</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ── Login page ── -->
-  <div class="login-backdrop" id="login-page">
+  <!-- Hidden until auth check completes to prevent flash -->
+  <div class="login-backdrop" id="login-page" style="display:none">
     <div class="login-card">
       <h1>Notes</h1>
       <p class="login-subtitle">Sign in to continue</p>
@@ -22,39 +22,62 @@
     </div>
   </div>
 
-  <!-- ── Main app (hidden until authenticated) ── -->
-  <div class="container" id="app" style="display:none">
-    <div class="app-header">
-      <h1>My Notes</h1>
-      <button class="btn-logout" id="btn-logout">Sign out</button>
-    </div>
+  <script>
+    const API      = 'http://127.0.0.1:5000';
+    const AUTH_API = `${API}/auth`;
+    const ACCESS_TOKEN_KEY = 'access_token';
 
-    <form class="note-form" id="create-form">
-      <h2>New note</h2>
-      <input type="text" id="new-title" placeholder="Title" required />
-      <textarea id="new-content" rows="3" placeholder="Content (optional)"></textarea>
-      <input type="file" id="new-image" accept="image/*" />
-      <button type="submit">Add note</button>
-    </form>
+    const loginPage  = document.getElementById('login-page');
+    const loginForm  = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
 
-    <div id="notes-list"></div>
-  </div>
+    // Decode JWT payload and check exp without verifying signature.
+    function isTokenValid(token) {
+      if (!token) return false;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp * 1000 > Date.now();
+      } catch {
+        return false;
+      }
+    }
 
-  <!-- Edit modal -->
-  <div class="modal-backdrop" id="edit-modal">
-    <div class="modal">
-      <h2>Edit note</h2>
-      <input type="text" id="edit-title" placeholder="Title" />
-      <textarea id="edit-content" rows="4" placeholder="Content"></textarea>
-      <img id="edit-image-preview" style="display:none; max-width:100%; margin-bottom:8px;" />
-      <input type="file" id="edit-image" accept="image/*" />
-      <div class="modal-actions">
-        <button class="btn-cancel" id="modal-cancel">Cancel</button>
-        <button class="btn-save"   id="modal-save">Save</button>
-      </div>
-    </div>
-  </div>
+    // Redirect to dashboard only if the access token stored in this tab session
+    // is still valid. Do NOT auto-redirect based on the refresh token.
+    function checkSession() {
+      const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+      if (isTokenValid(token)) {
+        window.location.replace('dashboard.html');
+      } else {
+        loginPage.style.display = 'flex';
+      }
+    }
 
-  <script src="script.js"></script>
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      loginError.textContent = '';
+
+      const res = await fetch(`${AUTH_API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        loginError.textContent = data.error || 'Login failed';
+        return;
+      }
+
+      const { access_token } = await res.json();
+      sessionStorage.setItem(ACCESS_TOKEN_KEY, access_token);
+      window.location.href = 'dashboard.html';
+    });
+
+    checkSession();
+  </script>
 </body>
 </html>

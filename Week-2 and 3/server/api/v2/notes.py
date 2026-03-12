@@ -1,9 +1,10 @@
+import base64
 import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Blueprint, abort, jsonify, make_response, request, send_from_directory
+from flask import Blueprint, abort, jsonify, make_response, request
 
 from services.user_auth import require_auth
 
@@ -43,13 +44,33 @@ def _image_path(note_id):
     return None
 
 
+def _image_data_url(note_id):
+    img = _image_path(note_id)
+    if img is None:
+        return None
+    ext_to_mime = {v: k for k, v in EXT_MAP.items()}
+    mime = ext_to_mime.get(img.suffix, "image/jpeg")
+    data = base64.b64encode(img.read_bytes()).decode()
+    return f"data:{mime};base64,{data}"
+
+
+def _with_image_data(note):
+    if not note.get("has_image"):
+        return note
+    data_url = _image_data_url(note["id"])
+    if data_url:
+        return {**note, "image_data": data_url}
+    return note
+
+
 @notes_bp.route("", methods=["GET"])
 @require_auth
 def get_notes():
-    data = list(notes.values())
-    etag = hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()
+    raw = list(notes.values())
+    etag = hashlib.md5(json.dumps(raw, sort_keys=True).encode()).hexdigest()
     if request.headers.get("If-None-Match") == etag:
         return "", 304
+    data = [_with_image_data(n) for n in raw]
     resp = make_response(jsonify(data), 200)
     resp.headers["Cache-Control"] = "private, max-age=5"
     resp.headers["ETag"] = etag
@@ -65,7 +86,7 @@ def get_note(note_id):
     etag = _note_etag(note)
     if request.headers.get("If-None-Match") == etag:
         return "", 304
-    resp = make_response(jsonify(note), 200)
+    resp = make_response(jsonify(_with_image_data(note)), 200)
     resp.headers["Cache-Control"] = "private, max-age=5"
     resp.headers["ETag"] = etag
     return resp
@@ -136,15 +157,3 @@ def delete_note(note_id):
     if img:
         img.unlink(missing_ok=True)
     return jsonify({"message": "Note deleted"}), 200
-
-
-@notes_bp.route("/<int:note_id>/image", methods=["GET"])
-@require_auth
-def get_image(note_id):
-    note = notes.get(note_id)
-    if note is None:
-        abort(404, description="Note not found")
-    img = _image_path(note_id)
-    if img is None:
-        abort(404, description="No image for this note")
-    return send_from_directory(UPLOAD_DIR, img.name)

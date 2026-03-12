@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Hidden until auth check confirms a valid session to prevent flash -->
+  <div class="container" id="app" style="display:none">
+    <div class="app-header">
+      <h1>My Notes</h1>
+      <button class="btn-logout" id="btn-logout">Sign out</button>
+    </div>
+
+    <form class="note-form" id="create-form">
+      <h2>New note</h2>
+      <input type="text" id="new-title" placeholder="Title" required />
+      <textarea id="new-content" rows="3" placeholder="Content (optional)"></textarea>
+      <input type="file" id="new-image" accept="image/*" />
+      <button type="submit">Add note</button>
+    </form>
+
+    <div id="notes-list"></div>
+  </div>
+
+  <!-- Edit modal -->
+  <div class="modal-backdrop" id="edit-modal">
+    <div class="modal">
+      <h2>Edit note</h2>
+      <input type="text" id="edit-title" placeholder="Title" />
+      <textarea id="edit-content" rows="4" placeholder="Content"></textarea>
+      <img id="edit-image-preview" style="display:none; max-width:100%; margin-bottom:8px;" />
+      <input type="file" id="edit-image" accept="image/*" />
+      <div class="modal-actions">
+        <button class="btn-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-save"   id="modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

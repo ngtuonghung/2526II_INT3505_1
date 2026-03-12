@@ -3,16 +3,27 @@ const API       = 'http://127.0.0.1:5000';
 const NOTES_API = `${API}/api/v2/notes`;
 const AUTH_API  = `${API}/auth`;
 
+const ACCESS_TOKEN_KEY = 'access_token';
+
+// Decode JWT payload and check exp without verifying signature.
+function isTokenValid(token) {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
 // State
-// Access token lives in memory only. Refresh token lives in an HttpOnly
+// Access token is kept in memory and mirrored in sessionStorage so it
+// survives same-tab page navigations. Refresh token lives in an HttpOnly
 // cookie managed by the browser — JS never touches it directly.
-let authToken  = null;
+let authToken  = sessionStorage.getItem(ACCESS_TOKEN_KEY);
 let editingId  = null;
 
 // DOM refs
-const loginPage   = document.getElementById('login-page');
-const loginForm   = document.getElementById('login-form');
-const loginError  = document.getElementById('login-error');
 const appDiv      = document.getElementById('app');
 const notesList   = document.getElementById('notes-list');
 const createForm  = document.getElementById('create-form');
@@ -32,16 +43,11 @@ function bearerHeader() {
   return { 'Authorization': `Bearer ${authToken}` };
 }
 
-function showLogin(errorMsg = '') {
-  loginError.textContent = errorMsg;
-  loginPage.style.display = 'flex';
-  appDiv.style.display = 'none';
+// Redirect to login page (called when the refresh token is invalid or user logs out).
+function redirectToLogin() {
   authToken = null;
-}
-
-function showApp() {
-  loginPage.style.display = 'none';
-  appDiv.style.display = 'block';
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.location.href = 'index.html';
 }
 
 // Sends the HttpOnly refresh_token cookie to get a new access token.
@@ -54,60 +60,39 @@ async function tryRefresh() {
   if (!res.ok) return false;
   const { access_token } = await res.json();
   authToken = access_token;
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, access_token);
   return true;
 }
 
 // Wraps a fetch call. On 401, attempts one silent token refresh then retries.
-// Returns the Response, or null if the user must log in again.
+// Returns the Response, or null if the session has expired.
 async function apiCall(requestFn) {
   let res = await requestFn();
   if (res.status === 401) {
     if (await tryRefresh()) {
       res = await requestFn();
     } else {
-      showLogin('Session expired. Please sign in again.');
+      redirectToLogin();
       return null;
     }
   }
   return res;
 }
 
-// Session restore on page load
+// Session restore on page load.
+// Use the existing access token if it is still valid; otherwise fall back to
+// the refresh token. Redirect to login only when the refresh token is invalid.
 async function checkSession() {
-  if (await tryRefresh()) {
-    showApp();
+  if (isTokenValid(authToken)) {
+    appDiv.style.display = 'block';
+    loadNotes();
+  } else if (await tryRefresh()) {
+    appDiv.style.display = 'block';
     loadNotes();
   } else {
-    showLogin();
+    redirectToLogin();
   }
 }
-
-// Login form
-loginForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  loginError.textContent = '';
-
-  const res = await fetch(`${AUTH_API}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ username, password }),
-  });
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    showLogin(data.error || 'Login failed');
-    return;
-  }
-
-  const { access_token } = await res.json();
-  authToken = access_token;
-  loginForm.reset();
-  showApp();
-  loadNotes();
-});
 
 // Logout
 document.getElementById('btn-logout').addEventListener('click', async () => {
@@ -115,7 +100,7 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     method: 'POST',
     credentials: 'include',
   });
-  showLogin();
+  redirectToLogin();
 });
 
 // Utility
@@ -128,14 +113,6 @@ function escHtml(str) {
 }
 
 // Notes rendering
-async function loadNoteImage(noteId, imgEl) {
-  const res = await apiCall(() => fetch(`${NOTES_API}/${noteId}/image`, { headers: bearerHeader() }));
-  if (!res || !res.ok) return;
-  const blob = await res.blob();
-  imgEl.src = URL.createObjectURL(blob);
-  imgEl.style.display = 'block';
-}
-
 function renderNotes(notes) {
   if (!notes.length) {
     notesList.innerHTML = '<p class="empty-state">No notes yet. Create one above!</p>';
@@ -149,13 +126,10 @@ function renderNotes(notes) {
       </div>
       <div class="note-title">${escHtml(n.title)}</div>
       <div class="note-content">${escHtml(n.content || '')}</div>
-      ${n.has_image ? `<img class="note-image" id="note-img-${n.id}" style="display:none; max-width:100%; margin-top:8px;" />` : ''}
+      ${n.image_data ? `<img class="note-image" src="${n.image_data}" style="max-width:100%; margin-top:8px;" />` : ''}
       <div class="note-time">${formatTime(n.time)}</div>
     </div>
   `).join('');
-  notes.filter(n => n.has_image).forEach(n =>
-    loadNoteImage(n.id, document.getElementById(`note-img-${n.id}`))
-  );
 }
 
 async function loadNotes() {
@@ -188,8 +162,10 @@ function openEdit(id) {
   editTitle.value   = card.querySelector('.note-title').textContent;
   editContent.value = card.querySelector('.note-content').textContent;
   editImage.value   = '';
-  if (card.dataset.hasImage === 'true') {
-    loadNoteImage(id, editImgPreview);
+  const cardImg = card.querySelector('.note-image');
+  if (cardImg) {
+    editImgPreview.src = cardImg.src;
+    editImgPreview.style.display = 'block';
   } else {
     editImgPreview.style.display = 'none';
     editImgPreview.src = '';
