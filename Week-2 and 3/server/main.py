@@ -1,7 +1,8 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-from api.v1.notes import notes_bp
+from api.v1.notes import notes_bp as notes_bp_v1
+from api.v2.notes import notes_bp as notes_bp_v2
 from services.user_auth import auth_bp
 
 app = Flask(__name__)
@@ -13,7 +14,8 @@ CORS_ORIGINS = [
 CORS(app, supports_credentials=True, origins=CORS_ORIGINS)
 
 app.register_blueprint(auth_bp)
-app.register_blueprint(notes_bp, url_prefix="/api/v1/notes")
+app.register_blueprint(notes_bp_v1, url_prefix="/api/v1/notes")
+app.register_blueprint(notes_bp_v2, url_prefix="/api/v2/notes")
 
 
 @app.errorhandler(400)
