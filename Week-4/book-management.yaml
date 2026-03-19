@@ -3,6 +3,9 @@ info:
   title: book management system
   version: "1337"
   description: API for book management
+servers:
+  - url: https://ngtuonghung.com/v1
+    description: Production server
 tags:
   - name: books
     description: endpoints for managing books.
