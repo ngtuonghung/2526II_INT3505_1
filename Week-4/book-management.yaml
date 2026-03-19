@@ -1,10 +1,11 @@
+openapi: 3.1.0
 info:
   title: book management system
   version: "1337"
   description: API for book management
 tags:
   - name: books
-    description: Endpoints dealing with book entities.
+    description: endpoints for managing books.
 paths:
   /books:
     post:
@@ -135,7 +136,6 @@ paths:
         - $ref: "#/components/parameters/book_id"
       description: Delete book by id
       operationId: deleteBook
-openapi: 3.1.0
 components:
   schemas:
     Book:
@@ -203,8 +203,6 @@ components:
           type: integer
           minimum: 0
       description: ""
-      x-fiddle-dto-info:
-        baseSchemaName: Book
     BookPartialUpdate:
       type: object
       properties:
@@ -229,21 +227,7 @@ components:
         - cover
       description: Data transfer object for partially updating an existing Book (PATCH
         operation).
-      x-fiddle-dto-info:
-        baseSchemaName: Book
   responses:
-    Conflict:
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - message
-            properties:
-              message:
-                type: string
-      description: The request could not be completed due to a conflict with the
-        current state of the resource. Resolve the conflict and try again.
     NotFound:
       content:
         application/json:
@@ -283,18 +267,19 @@ components:
         persists.
   parameters:
     title:
-      in: query
       name: title
-      style: form
+      in: query
+      description: To filter book by title
       schema:
         type: string
       explode: false
-      required: false
-      description: Filter the list of books according to the title.
+      style: form
+      allowReserved: false
+      allowEmptyValue: false
     author_id:
       name: author_id
       in: query
-      description: Filter the list of books accodring to the `author_id`.
+      description: To filter book by author id
       schema:
         type: integer
       explode: false
@@ -311,15 +296,15 @@ components:
       style: simple
       required: true
       allowReserved: false
-      allowEmptyValue: true
+      allowEmptyValue: false
     page:
       name: page
       in: query
       description: page
       schema:
         type: integer
-      explode: true
+      explode: false
       style: form
       required: true
       allowReserved: false
-      allowEmptyValue: true
+      allowEmptyValue: false
