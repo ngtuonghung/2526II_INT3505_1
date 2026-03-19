@@ -1,0 +1,325 @@
+info:
+  title: book management system
+  version: "1337"
+  description: API for book management
+tags:
+  - name: books
+    description: Endpoints dealing with book entities.
+paths:
+  /books:
+    post:
+      tags:
+        - books
+      summary: Create book
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+          description: Book create successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+      description: Create new book
+      operationId: createBook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookCreate"
+        required: true
+        description: Details of the book to be created.
+      parameters: []
+    get:
+      tags:
+        - books
+      summary: Get book list
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+                title: GetBookListOk
+          description: A JSON array containing book objects.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerErrror"
+      parameters:
+        - $ref: "#/components/parameters/title"
+        - $ref: "#/components/parameters/author_id"
+        - $ref: "#/components/parameters/page"
+      description: Get book list by pages
+      operationId: getBookList
+  /books/{book_id}:
+    get:
+      tags:
+        - books
+      summary: Get book
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+          description: A JSON object containing the book details.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerErrror"
+      parameters:
+        - $ref: "#/components/parameters/book_id"
+      description: |
+        Get book by id
+      operationId: getBook
+    patch:
+      operationId: updateBook
+      tags:
+        - books
+      summary: Update book
+      parameters:
+        - $ref: "#/components/parameters/book_id"
+      responses:
+        "200":
+          description: The request was successful, and the server has returned the
+            requested resource in the response body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Book"
+                required:
+                  - data
+                title: UpdateBookOk
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerErrror"
+      description: Update book info
+      requestBody:
+        required: true
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookPartialUpdate"
+    delete:
+      tags:
+        - books
+      summary: Delete book
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: "null"
+                title: DeleteBookNoContent
+          description: The request was successful, but there is no content to return in
+            the response.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerErrror"
+      parameters:
+        - $ref: "#/components/parameters/book_id"
+      description: Delete book by id
+      operationId: deleteBook
+openapi: 3.1.0
+components:
+  schemas:
+    Book:
+      type: object
+      required:
+        - id
+        - title
+        - author
+        - description
+        - numOfPages
+        - year
+        - cover
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        author:
+          $ref: "#/components/schemas/Author"
+        description:
+          type: string
+        numOfPages:
+          type: integer
+          minimum: 2
+        year:
+          type: integer
+          minimum: 0
+        cover:
+          type: object
+      description: ""
+    Author:
+      type: object
+      required:
+        - id
+        - name
+        - birth
+        - numOfBooks
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        birth:
+          type: integer
+          minimum: 0
+        numOfBooks:
+          type: integer
+      description: Creator of books.
+    BookCreate:
+      type: object
+      required:
+        - author
+        - title
+      properties:
+        title:
+          type: string
+        author:
+          type: integer
+        description:
+          type: string
+        numOfPages:
+          type: integer
+          minimum: 2
+        year:
+          type: integer
+          minimum: 0
+      description: ""
+      x-fiddle-dto-info:
+        baseSchemaName: Book
+    BookPartialUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        author_id:
+          type: integer
+        description:
+          type: string
+        numOfPages:
+          type: integer
+        year:
+          type: integer
+        cover:
+          type: object
+      required:
+        - title
+        - author_id
+        - description
+        - numOfPages
+        - year
+        - cover
+      description: Data transfer object for partially updating an existing Book (PATCH
+        operation).
+      x-fiddle-dto-info:
+        baseSchemaName: Book
+  responses:
+    Conflict:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+      description: The request could not be completed due to a conflict with the
+        current state of the resource. Resolve the conflict and try again.
+    NotFound:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+      description: The server cannot find the requested resource. The endpoint may be
+        invalid or the resource may no longer exist.
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+      description: The server could not understand the request due to invalid syntax.
+        The client should modify the request and try again.
+    InternalServerErrror:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+      description: The server encountered an unexpected condition that prevented it
+        from fulfilling the request. Report the issue to the support team if it
+        persists.
+  parameters:
+    title:
+      in: query
+      name: title
+      style: form
+      schema:
+        type: string
+      explode: false
+      required: false
+      description: Filter the list of books according to the title.
+    author_id:
+      name: author_id
+      in: query
+      description: Filter the list of books accodring to the `author_id`.
+      schema:
+        type: integer
+      explode: false
+      style: form
+      allowReserved: false
+      allowEmptyValue: false
+    book_id:
+      name: book_id
+      in: path
+      description: Path parameter to retrieve books by.
+      schema:
+        type: integer
+      explode: false
+      style: simple
+      required: true
+      allowReserved: false
+      allowEmptyValue: true
+    page:
+      name: page
+      in: query
+      description: page
+      schema:
+        type: integer
+      explode: true
+      style: form
+      required: true
+      allowReserved: false
+      allowEmptyValue: true
