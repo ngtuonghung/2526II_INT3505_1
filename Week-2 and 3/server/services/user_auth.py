@@ -6,11 +6,13 @@ from flask import Blueprint, request, jsonify, abort, make_response
 from datetime import datetime, timezone, timedelta
 import jwt
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "2526II_INT3505_1_SECRET")  # MUST override via env in production
+JWT_SECRET = os.environ.get("JWT_SECRET", "2526II_INT3505_1_SECRET")
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRY_MINUTES = 15
+ACCESS_TOKEN_EXPIRY_MINUTES = 0.5
 REFRESH_TOKEN_EXPIRY_DAYS = 7
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
+ACCESS_COOKIE_NAME = "access_token"
+REFRESH_COOKIE_NAME = "refresh_token"
 
 # Passwords stored as SHA-256 hex digests
 USERS = {
@@ -36,7 +38,7 @@ def issue_refresh_token(username):
 
 def set_refresh_cookie(resp, token):
     resp.set_cookie(
-        "refresh_token",
+        REFRESH_COOKIE_NAME,
         token,
         httponly=True,
         secure=COOKIE_SECURE,
@@ -46,13 +48,24 @@ def set_refresh_cookie(resp, token):
     )
 
 
+def set_access_cookie(resp, token):
+    resp.set_cookie(
+        ACCESS_COOKIE_NAME,
+        token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="Strict",
+        max_age=int(ACCESS_TOKEN_EXPIRY_MINUTES * 60),
+        path="/",  # allows access on protected API routes
+    )
+
+
 def require_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            abort(401, description="Missing or malformed Authorization header")
-        token = auth_header[len("Bearer "):]
+        token = request.cookies.get(ACCESS_COOKIE_NAME)
+        if not token:
+            abort(401, description="Missing access token cookie")
         try:
             jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         except jwt.ExpiredSignatureError:
@@ -75,17 +88,17 @@ def login():
         abort(400, description="'username' and 'password' are required")
     stored_hash = USERS.get(username)
     password_hash = password  # pre-hashed SHA-256 from client
-    # Vulnerable to timing attack — use hmac.compare_digest() in production
     if stored_hash is None or password_hash != stored_hash:
         abort(401, description="Invalid credentials")
-    resp = make_response(jsonify({"access_token": issue_access_token(username)}), 200)
+    resp = make_response(jsonify({"message": "Login successful"}), 200)
+    set_access_cookie(resp, issue_access_token(username))
     set_refresh_cookie(resp, issue_refresh_token(username))
     return resp
 
 
 @auth_bp.route("/refresh", methods=["POST"])
 def refresh():
-    token = request.cookies.get("refresh_token")
+    token = request.cookies.get(REFRESH_COOKIE_NAME)
     if not token:
         abort(401, description="No refresh token")
     entry = refresh_tokens.get(token)
@@ -94,24 +107,34 @@ def refresh():
     if datetime.now(timezone.utc) > entry["expires_at"]:
         refresh_tokens.pop(token, None)
         abort(401, description="Refresh token expired")
-    # Refresh token is not rotated — reuse until expiry
     # Refresh token is not rotated — reused until expiry
-    return jsonify({"access_token": issue_access_token(entry["username"])}), 200
+    resp = make_response(jsonify({"message": "Access token refreshed"}), 200)
+    set_access_cookie(resp, issue_access_token(entry["username"]))
+    return resp
 
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
-    token = request.cookies.get("refresh_token")
+    token = request.cookies.get(REFRESH_COOKIE_NAME)
     if token:
         refresh_tokens.pop(token, None)
     resp = make_response(jsonify({"message": "Logged out"}), 200)
     resp.set_cookie(
-        "refresh_token",
+        REFRESH_COOKIE_NAME,
         "",
         max_age=0,
         httponly=True,
         secure=COOKIE_SECURE,
         samesite="Strict",
         path="/auth",
+    )
+    resp.set_cookie(
+        ACCESS_COOKIE_NAME,
+        "",
+        max_age=0,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="Strict",
+        path="/",
     )
     return resp

@@ -3,24 +3,7 @@ const API       = 'http://127.0.0.1:5000';
 const NOTES_API = `${API}/api/v2/notes`;
 const AUTH_API  = `${API}/auth`;
 
-const ACCESS_TOKEN_KEY = 'access_token';
-
-// Decode JWT payload and check exp without verifying signature.
-function isTokenValid(token) {
-  if (!token) return false;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp * 1000 > Date.now();
-  } catch {
-    return false;
-  }
-}
-
 // State
-// Access token is kept in memory and mirrored in sessionStorage so it
-// survives same-tab page navigations. Refresh token lives in an HttpOnly
-// cookie managed by the browser — JS never touches it directly.
-let authToken  = sessionStorage.getItem(ACCESS_TOKEN_KEY);
 let editingId  = null;
 
 // DOM refs
@@ -34,19 +17,8 @@ const editImage      = document.getElementById('edit-image');
 const editImgPreview = document.getElementById('edit-image-preview');
 const newImage       = document.getElementById('new-image');
 
-// Auth helpers
-function authHeaders() {
-  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` };
-}
-
-function bearerHeader() {
-  return { 'Authorization': `Bearer ${authToken}` };
-}
-
 // Redirect to login page (called when the refresh token is invalid or user logs out).
 function redirectToLogin() {
-  authToken = null;
-  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   window.location.href = 'index.html';
 }
 
@@ -57,11 +29,7 @@ async function tryRefresh() {
     method: 'POST',
     credentials: 'include',
   });
-  if (!res.ok) return false;
-  const { access_token } = await res.json();
-  authToken = access_token;
-  sessionStorage.setItem(ACCESS_TOKEN_KEY, access_token);
-  return true;
+  return res.ok;
 }
 
 // Wraps a fetch call. On 401, attempts one silent token refresh then retries.
@@ -83,10 +51,7 @@ async function apiCall(requestFn) {
 // Use the existing access token if it is still valid; otherwise fall back to
 // the refresh token. Redirect to login only when the refresh token is invalid.
 async function checkSession() {
-  if (isTokenValid(authToken)) {
-    appDiv.style.display = 'block';
-    loadNotes();
-  } else if (await tryRefresh()) {
+  if (await tryRefresh()) {
     appDiv.style.display = 'block';
     loadNotes();
   } else {
@@ -133,7 +98,7 @@ function renderNotes(notes) {
 }
 
 async function loadNotes() {
-  const res = await apiCall(() => fetch(NOTES_API, { headers: bearerHeader() }));
+  const res = await apiCall(() => fetch(NOTES_API, { credentials: 'include' }));
   if (!res) return;
   renderNotes(await res.json());
 }
@@ -147,7 +112,7 @@ createForm.addEventListener('submit', async e => {
   if (newImage.files[0]) fd.append('image', newImage.files[0]);
   const res = await apiCall(() => fetch(NOTES_API, {
     method: 'POST',
-    headers: bearerHeader(),
+    credentials: 'include',
     body: fd,
   }));
   if (!res) return;
@@ -192,7 +157,7 @@ document.getElementById('modal-save').addEventListener('click', async () => {
   if (editImage.files[0]) fd.append('image', editImage.files[0]);
   const res = await apiCall(() => fetch(`${NOTES_API}/${editingId}`, {
     method: 'PATCH',
-    headers: bearerHeader(),
+    credentials: 'include',
     body: fd,
   }));
   if (!res) return;
@@ -205,7 +170,7 @@ async function deleteNote(id) {
   if (!confirm('Delete this note?')) return;
   const res = await apiCall(() => fetch(`${NOTES_API}/${id}`, {
     method: 'DELETE',
-    headers: bearerHeader(),
+    credentials: 'include',
   }));
   if (!res) return;
   loadNotes();
