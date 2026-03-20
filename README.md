@@ -3,7 +3,7 @@ Kiến trúc hướng dịch vụ
 
 Swagger UI Demo: https://app.swaggerhub.com/apis/uet-363/book-management-system/1337
 
-Product server: https://week-4-nu-two.vercel.app/
+Production server: https://week-4-nu-two.vercel.app/
 
 Request:
 ```plain
