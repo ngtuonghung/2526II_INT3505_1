@@ -6,7 +6,7 @@ info:
 servers:
   - url: https://127.0.0.1:5000/v1
     description: dev
-  - url: https://week-4-mtkirlvzq-hungtuong05-6384s-projects.vercel.app
+  - url: https://week-4-nu-two.vercel.app/
     description: prod
 tags:
   - name: books

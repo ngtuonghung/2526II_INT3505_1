@@ -7,7 +7,9 @@ Product server: https://week-4-nu-two.vercel.app/
 
 Request:
 ```plain
-vercel curl /books?page=1 --deployment https://week-4-nu-two.vercel.app/
+curl -X 'GET' \
+  'https://week-4-nu-two.vercel.app/books?page=1' \
+  -H 'accept: application/json'
 ```
 
 Response:
