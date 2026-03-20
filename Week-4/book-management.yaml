@@ -4,8 +4,10 @@ info:
   version: "1337"
   description: API for book management
 servers:
-  - url: https://ngtuonghung.com/v1
-    description: Production server
+  - url: https://127.0.0.1:5000/v1
+    description: dev
+  - url: https://week-4-mtkirlvzq-hungtuong05-6384s-projects.vercel.app
+    description: prod
 tags:
   - name: books
     description: endpoints for managing books.
