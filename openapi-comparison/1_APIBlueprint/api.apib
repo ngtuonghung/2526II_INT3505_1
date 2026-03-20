@@ -1,0 +1,421 @@
+FORMAT: 1A
+
+# book management system
+
+API for book management
+
+### /books
+
+#### Create book [POST]
+
+Create new book
+
++ Request (application/json)
+
+    Details of the book to be created.
+
+    + Attributes
+
+    + Body
+
+            {
+              "title": "",
+              "author": 0,
+              "description": "",
+              "numOfPages": 0,
+              "year": 0
+            }
+
++ Response 201 (application/json)
+
+    Book create successfully
+
+    + Attributes
+
+    + Body
+
+            {
+              "id": 0,
+              "title": "",
+              "author": {
+                "id": 0,
+                "name": "",
+                "birth": 0,
+                "numOfBooks": 0
+              },
+              "description": "",
+              "numOfPages": 0,
+              "year": 0,
+              "cover": {}
+            }
+
++ Request (application/json)
+
+    Details of the book to be created.
+
+    + Attributes
+
+    + Body
+
+            {
+              "title": "",
+              "author": 0,
+              "description": "",
+              "numOfPages": 0,
+              "year": 0
+            }
+
++ Response 400 (application/json)
+
+    The server could not understand the request due to invalid syntax. The client should modify the request and try again.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
+#### Get book list [GET /books{?title*,author_id*,page*}]
+
+Get book list by pages
+
++ Parameters
+
+    + title - To filter book by title
+    
+    + author_id - To filter book by author id
+    
+    + page (required) - page
+
++ Response 200 (application/json)
+
+    A JSON array containing book objects.
+
+    + Attributes
+
+    + Body
+
+            [
+              {
+                "id": 0,
+                "title": "",
+                "author": {
+                  "id": 0,
+                  "name": "",
+                  "birth": 0,
+                  "numOfBooks": 0
+                },
+                "description": "",
+                "numOfPages": 0,
+                "year": 0,
+                "cover": {}
+              }
+            ]
+
++ Response 400 (application/json)
+
+    The server could not understand the request due to invalid syntax. The client should modify the request and try again.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Response 500 (application/json)
+
+    The server encountered an unexpected condition that prevented it from fulfilling the request. Report the issue to the support team if it persists.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
+### /books/{book_id}
+
+#### Get book [GET]
+
+Get book by id
+
++ Parameters
+
+    + book_id (required) - Path parameter to retrieve books by.
+
++ Response 200 (application/json)
+
+    A JSON object containing the book details.
+
+    + Attributes
+
+    + Body
+
+            {
+              "id": 0,
+              "title": "",
+              "author": {
+                "id": 0,
+                "name": "",
+                "birth": 0,
+                "numOfBooks": 0
+              },
+              "description": "",
+              "numOfPages": 0,
+              "year": 0,
+              "cover": {}
+            }
+
++ Response 400 (application/json)
+
+    The server could not understand the request due to invalid syntax. The client should modify the request and try again.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Response 404 (application/json)
+
+    The server cannot find the requested resource. The endpoint may be invalid or the resource may no longer exist.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Response 500 (application/json)
+
+    The server encountered an unexpected condition that prevented it from fulfilling the request. Report the issue to the support team if it persists.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
+#### Update book [PATCH]
+
+Update book info
+
++ Parameters
+
+    + book_id (required) - Path parameter to retrieve books by.
+
++ Request (application/json)
+
+    + Attributes
+
+    + Body
+
+            {
+              "title": "",
+              "author_id": 0,
+              "description": "",
+              "numOfPages": 0,
+              "year": 0,
+              "cover": {}
+            }
+
++ Response 200 (application/json)
+
+    The request was successful, and the server has returned the requested resource in the response body.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "data": {
+                "id": 0,
+                "title": "",
+                "author": {
+                  "id": 0,
+                  "name": "",
+                  "birth": 0,
+                  "numOfBooks": 0
+                },
+                "description": "",
+                "numOfPages": 0,
+                "year": 0,
+                "cover": {}
+              }
+            }
+
++ Request (application/json)
+
+    + Attributes
+
+    + Body
+
+            {
+              "title": "",
+              "author_id": 0,
+              "description": "",
+              "numOfPages": 0,
+              "year": 0,
+              "cover": {}
+            }
+
++ Response 400 (application/json)
+
+    The server could not understand the request due to invalid syntax. The client should modify the request and try again.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Request (application/json)
+
+    + Attributes
+
+    + Body
+
+            {
+              "title": "",
+              "author_id": 0,
+              "description": "",
+              "numOfPages": 0,
+              "year": 0,
+              "cover": {}
+            }
+
++ Response 404 (application/json)
+
+    The server cannot find the requested resource. The endpoint may be invalid or the resource may no longer exist.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Request (application/json)
+
+    + Attributes
+
+    + Body
+
+            {
+              "title": "",
+              "author_id": 0,
+              "description": "",
+              "numOfPages": 0,
+              "year": 0,
+              "cover": {}
+            }
+
++ Response 500 (application/json)
+
+    The server encountered an unexpected condition that prevented it from fulfilling the request. Report the issue to the support team if it persists.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
+#### Delete book [DELETE]
+
+Delete book by id
+
++ Parameters
+
+    + book_id (required) - Path parameter to retrieve books by.
+
++ Response 204
+
+    The request was successful, but there is no content to return in the response.
+
++ Response 400 (application/json)
+
+    The server could not understand the request due to invalid syntax. The client should modify the request and try again.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Response 404 (application/json)
+
+    The server cannot find the requested resource. The endpoint may be invalid or the resource may no longer exist.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
++ Response 500 (application/json)
+
+    The server encountered an unexpected condition that prevented it from fulfilling the request. Report the issue to the support team if it persists.
+
+    + Attributes (required)
+
+    + Body
+
+            {
+              "message": ""
+            }
+
+## Data Structures
+
+### Book
+
++ id (number, required)
++ title (required)
++ author (Author, required)
++ description (required)
++ numOfPages (number, required)
++ year (number, required)
++ cover (object, required)
+
+### Author - Creator of books.
+
++ id (number, required)
++ name (required)
++ birth (number, required)
++ numOfBooks (number, required)
+
+### BookCreate
+
++ title (required)
++ author (number, required)
++ description
++ numOfPages (number)
++ year (number)
+
+### BookPartialUpdate - Data transfer object for partially updating an existing Book (PATCH operation).
+
++ title (required)
++ author_id (number, required)
++ description (required)
++ numOfPages (number, required)
++ year (number, required)
++ cover (object, required)
