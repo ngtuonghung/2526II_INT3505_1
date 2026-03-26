@@ -1,0 +1,20 @@
+/authors
+    /{author_id}
+        /books
+
+/categories
+    /{category_id}
+        /books
+
+/books
+    /{book_id}
+        /authors
+        /categories
+        /transactions
+
+/members
+    /{member_id}
+        /transactions
+
+/transactions
+    /{transaction_id}
