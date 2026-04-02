@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import mysql.connector
 from dotenv import load_dotenv
+import base64
 import os
 
 load_dotenv()
@@ -23,8 +24,8 @@ BOOKS_SELECT = (
     "LEFT JOIN categories c ON b.category_id = c.id"
 )
 
-
-CURSOR_PAGE_SIZE = 5
+PAGE_SIZE = 5
+PAGE_SIZE_LIMIT = 50
 
 def get_conn():
     return mysql.connector.connect(**DB)
@@ -32,6 +33,20 @@ def get_conn():
 def to_dict(cur, rows):
     cols = [d[0] for d in cur.description]
     return [dict(zip(cols, row)) for row in rows]
+
+def encode_cursor(id):
+    return base64.b64encode(f"cursor:{id}".encode()).decode()
+
+def decode_cursor(token):
+    try:
+        decoded = base64.b64decode(token.encode()).decode()
+        _, raw_id = decoded.split("cursor:")
+        id = int(raw_id)
+        if id < 0:
+            raise ValueError
+        return id
+    except Exception:
+        return None
 
 
 @app.get("/book/all")
@@ -48,17 +63,16 @@ def book_all():
 @app.get("/book/page")
 def book_page():
     page = request.args.get("page")
-    size = request.args.get("size")
-    if page is None or size is None:
-        return jsonify({"error": "missing required params: page, size"}), 400
+    if page is None:
+        return jsonify({"error": "missing required param: page"}), 400
 
     page = max(1, int(page))
-    size = max(1, int(size))
-    offset = (page - 1) * size
+    page_size = max(1, min(int(request.args.get("page_size", PAGE_SIZE)), PAGE_SIZE_LIMIT))
+    offset = (page - 1) * page_size
 
     conn = get_conn()
     cur = conn.cursor(prepared=True)
-    cur.execute(f"{BOOKS_SELECT} LIMIT %s OFFSET %s", (size, offset))
+    cur.execute(f"{BOOKS_SELECT} LIMIT %s OFFSET %s", (page_size, offset))
     rows = to_dict(cur, cur.fetchall())
     cur.close()
     conn.close()
@@ -66,9 +80,7 @@ def book_page():
     return jsonify({
         "count": len(rows),
         "page": page,
-        "size": size,
-        "next": page + 1 if len(rows) == size else None,
-        "previous": page - 1 if page > 1 else None,
+        "page_size": page_size,
         "data": rows,
     })
 
@@ -81,7 +93,7 @@ def book_offset():
         return jsonify({"error": "missing required params: offset, limit"}), 400
 
     offset = max(0, int(offset))
-    limit = max(1, int(limit))
+    limit = max(1, min(int(limit), PAGE_SIZE_LIMIT))
 
     conn = get_conn()
     cur = conn.cursor(prepared=True)
@@ -94,33 +106,42 @@ def book_offset():
         "count": len(rows),
         "offset": offset,
         "limit": limit,
-        "next_offset": offset + limit if len(rows) == limit else None,
-        "previous_offset": offset - limit if offset - limit >= 0 else None,
         "data": rows,
     })
 
 
 @app.get("/book/cursor")
 def book_cursor():
-    after_id = int(request.args.get("continue", 0))
+    token = request.args.get("continue")
+    size = max(1, min(int(request.args.get("size", PAGE_SIZE)), PAGE_SIZE_LIMIT))
+    if token is not None:
+        after_id = decode_cursor(token)
+        if after_id is None:
+            return jsonify({"error": "invalid cursor"}), 400
+    else:
+        after_id = 0
 
     conn = get_conn()
     cur = conn.cursor(prepared=True)
 
     cur.execute(
         f"{BOOKS_SELECT} WHERE b.id > %s ORDER BY b.id LIMIT %s",
-        (after_id, CURSOR_PAGE_SIZE),
+        (after_id, size),
     )
     rows = to_dict(cur, cur.fetchall())
 
     cur.close()
     conn.close()
 
-    next_id = rows[-1]["id"] if len(rows) == CURSOR_PAGE_SIZE else None
+    next_path = None
+    if len(rows) > 0:
+        next_token = encode_cursor(rows[-1]["id"])
+        next_path = f"/book/cursor?continue={next_token}&size={size}"
 
     return jsonify({
-        "size": CURSOR_PAGE_SIZE,
-        "next": next_id,
+        "count": len(rows),
+        "size": size,
+        "next": next_path,
         "data": rows,
     })
 

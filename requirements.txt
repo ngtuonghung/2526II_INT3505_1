@@ -2,3 +2,5 @@ flask
 flask-cors
 PyJWT
 flasgger
+mysql-connector-python
+python-dotenv
