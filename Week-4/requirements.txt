@@ -1,3 +1,0 @@
-flask
-flasgger
-flask-cors
