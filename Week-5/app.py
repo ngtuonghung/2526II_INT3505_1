@@ -23,6 +23,7 @@ BOOKS_SELECT = (
     "LEFT JOIN categories c ON b.category_id = c.id"
 )
 
+
 CURSOR_PAGE_SIZE = 5
 
 def get_conn():
@@ -57,24 +58,16 @@ def book_page():
 
     conn = get_conn()
     cur = conn.cursor(prepared=True)
-
-    cur.execute(f"SELECT COUNT(*) FROM ({BOOKS_SELECT}) t", ())
-    count = cur.fetchone()[0]
-
     cur.execute(f"{BOOKS_SELECT} LIMIT %s OFFSET %s", (size, offset))
     rows = to_dict(cur, cur.fetchall())
-
     cur.close()
     conn.close()
 
-    total_pages = -(-count // size)
-
     return jsonify({
-        "count": count,
+        "count": len(rows),
         "page": page,
         "size": size,
-        "total_pages": total_pages,
-        "next": page + 1 if page < total_pages else None,
+        "next": page + 1 if len(rows) == size else None,
         "previous": page - 1 if page > 1 else None,
         "data": rows,
     })
@@ -92,25 +85,17 @@ def book_offset():
 
     conn = get_conn()
     cur = conn.cursor(prepared=True)
-
-    cur.execute(f"SELECT COUNT(*) FROM ({BOOKS_SELECT}) t", ())
-    count = cur.fetchone()[0]
-
     cur.execute(f"{BOOKS_SELECT} LIMIT %s OFFSET %s", (limit, offset))
     rows = to_dict(cur, cur.fetchall())
-
     cur.close()
     conn.close()
 
-    next_offset = offset + limit
-    prev_offset = offset - limit
-
     return jsonify({
-        "count": count,
+        "count": len(rows),
         "offset": offset,
         "limit": limit,
-        "next_offset": next_offset if next_offset < count else None,
-        "previous_offset": prev_offset if prev_offset >= 0 else None,
+        "next_offset": offset + limit if len(rows) == limit else None,
+        "previous_offset": offset - limit if offset - limit >= 0 else None,
         "data": rows,
     })
 
