@@ -77,16 +77,16 @@ Create new book
               "message": ""
             }
 
-#### Get book list [GET /books{?title*,author_id*,page*}]
+#### Get book list [GET /books{?title,author_id,page}]
 
 Get book list by pages
 
 + Parameters
 
     + title - To filter book by title
-    
+
     + author_id - To filter book by author id
-    
+
     + page (required) - page
 
 + Response 200 (application/json)
@@ -346,8 +346,6 @@ Delete book by id
 
 + Response 204
 
-    The request was successful, but there is no content to return in the response.
-
 + Response 400 (application/json)
 
     The server could not understand the request due to invalid syntax. The client should modify the request and try again.
@@ -396,7 +394,9 @@ Delete book by id
 + year (number, required)
 + cover (object, required)
 
-### Author - Creator of books.
+### Author
+
+Creator of books.
 
 + id (number, required)
 + name (required)
@@ -411,7 +411,9 @@ Delete book by id
 + numOfPages (number)
 + year (number)
 
-### BookPartialUpdate - Data transfer object for partially updating an existing Book (PATCH operation).
+### BookPartialUpdate
+
+Data transfer object for partially updating an existing Book (PATCH operation).
 
 + title (required)
 + author_id (number, required)

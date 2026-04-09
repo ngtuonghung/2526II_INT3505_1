@@ -200,7 +200,6 @@ def logout():
     return resp
 
 
-# Demo: any logged-in user — returns info from JWT
 @auth_bp.route("/me")
 @require_auth
 def me(token_payload):
@@ -211,7 +210,6 @@ def me(token_payload):
     })
 
 
-# Demo: admin only (requires "manage_users" scope)
 @auth_bp.route("/admin/users")
 @require_scope("manage_users")
 def admin_users(**_):

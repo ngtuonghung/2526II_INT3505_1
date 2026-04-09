@@ -1,0 +1,167 @@
+{
+  "baseUrl": "https://week-4-nu-two.vercel.app/",
+  "operations": {
+    "book.getList": {
+      "description": "Get book list by pages",
+      "method": "GET",
+      "path": "/books",
+      "arguments": {
+        "title": {
+          "in": "query",
+          "schema": { "type": "string" }
+        },
+        "author_id": {
+          "in": "query",
+          "schema": { "type": "integer" }
+        },
+        "page": {
+          "in": "query",
+          "schema": { "type": "integer" }
+        }
+      },
+      "return": {
+        "schema": {
+          "type": "array",
+          "items": { "type": "reference", "target": "Book" }
+        }
+      },
+      "throws": [
+        { "code": 400, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 500, "schema": { "type": "reference", "target": "ErrorResponse" } }
+      ]
+    },
+    "book.create": {
+      "description": "Create new book",
+      "method": "POST",
+      "path": "/books",
+      "arguments": {
+        "payload": {
+          "in": "body",
+          "schema": { "type": "reference", "target": "BookCreate" }
+        }
+      },
+      "return": {
+        "schema": { "type": "reference", "target": "Book" }
+      },
+      "throws": [
+        { "code": 400, "schema": { "type": "reference", "target": "ErrorResponse" } }
+      ]
+    },
+    "book.get": {
+      "description": "Get book by id",
+      "method": "GET",
+      "path": "/books/:book_id",
+      "arguments": {
+        "book_id": {
+          "in": "path",
+          "schema": { "type": "integer" }
+        }
+      },
+      "return": {
+        "schema": { "type": "reference", "target": "Book" }
+      },
+      "throws": [
+        { "code": 400, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 404, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 500, "schema": { "type": "reference", "target": "ErrorResponse" } }
+      ]
+    },
+    "book.update": {
+      "description": "Update book info",
+      "method": "PATCH",
+      "path": "/books/:book_id",
+      "arguments": {
+        "book_id": {
+          "in": "path",
+          "schema": { "type": "integer" }
+        },
+        "payload": {
+          "in": "body",
+          "schema": { "type": "reference", "target": "BookPartialUpdate" }
+        }
+      },
+      "return": {
+        "schema": { "type": "reference", "target": "UpdateBookOk" }
+      },
+      "throws": [
+        { "code": 400, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 404, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 500, "schema": { "type": "reference", "target": "ErrorResponse" } }
+      ]
+    },
+    "book.delete": {
+      "description": "Delete book by id",
+      "method": "DELETE",
+      "path": "/books/:book_id",
+      "arguments": {
+        "book_id": {
+          "in": "path",
+          "schema": { "type": "integer" }
+        }
+      },
+      "throws": [
+        { "code": 400, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 404, "schema": { "type": "reference", "target": "ErrorResponse" } },
+        { "code": 500, "schema": { "type": "reference", "target": "ErrorResponse" } }
+      ]
+    }
+  },
+  "definitions": {
+    "Author": {
+      "description": "Creator of books.",
+      "type": "struct",
+      "properties": {
+        "id":         { "type": "integer" },
+        "name":       { "type": "string" },
+        "birth":      { "type": "integer" },
+        "numOfBooks": { "type": "integer" }
+      }
+    },
+    "Book": {
+      "type": "struct",
+      "properties": {
+        "id":          { "type": "integer" },
+        "title":       { "type": "string" },
+        "author":      { "type": "reference", "target": "Author" },
+        "description": { "type": "string" },
+        "numOfPages":  { "type": "integer" },
+        "year":        { "type": "integer" },
+        "cover":       { "type": "map", "schema": { "type": "string" } }
+      }
+    },
+    "BookCreate": {
+      "type": "struct",
+      "properties": {
+        "title":       { "type": "string" },
+        "author":      { "type": "integer" },
+        "description": { "type": "string" },
+        "numOfPages":  { "type": "integer" },
+        "year":        { "type": "integer" }
+      }
+    },
+    "BookPartialUpdate": {
+      "description": "Data transfer object for partially updating an existing Book (PATCH operation).",
+      "type": "struct",
+      "properties": {
+        "title":       { "type": "string" },
+        "author_id":   { "type": "integer" },
+        "description": { "type": "string" },
+        "numOfPages":  { "type": "integer" },
+        "year":        { "type": "integer" },
+        "cover":       { "type": "map", "schema": { "type": "string" } }
+      }
+    },
+    "UpdateBookOk": {
+      "type": "struct",
+      "properties": {
+        "data": { "type": "reference", "target": "Book" }
+      }
+    },
+    "ErrorResponse": {
+      "type": "struct",
+      "properties": {
+        "message": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+npx apib2swagger -i api.apib --open-api-3 --yaml -o openapi.yaml

@@ -1,0 +1,189 @@
+#%RAML 1.0
+title: book management system
+version: "1337"
+description: API for book management
+baseUri: https://week-4-nu-two.vercel.app/
+
+mediaType: application/json
+
+# ─── Types ────────────────────────────────────────────────────────────────────
+
+types:
+  Author:
+    description: Creator of books.
+    type: object
+    properties:
+      id:        integer
+      name:      string
+      birth:
+        type: integer
+        minimum: 0
+      numOfBooks: integer
+
+  Book:
+    type: object
+    properties:
+      id:          integer
+      title:       string
+      author:      Author
+      description: string
+      numOfPages:
+        type: integer
+        minimum: 2
+      year:
+        type: integer
+        minimum: 0
+      cover:       object
+
+  BookCreate:
+    type: object
+    properties:
+      title:
+        type: string
+        required: true
+      author:
+        type: integer
+        required: true
+        description: Author ID
+      description:
+        type: string
+        required: false
+      numOfPages:
+        type: integer
+        minimum: 2
+        required: false
+      year:
+        type: integer
+        minimum: 0
+        required: false
+
+  BookPartialUpdate:
+    description: Data transfer object for partially updating an existing Book (PATCH operation).
+    type: object
+    properties:
+      title:       string
+      author_id:   integer
+      description: string
+      numOfPages:  integer
+      year:        integer
+      cover:       object
+
+  UpdateBookOk:
+    type: object
+    properties:
+      data: Book
+
+  ErrorResponse:
+    type: object
+    properties:
+      message: string
+
+# ─── Traits ───────────────────────────────────────────────────────────────────
+
+traits:
+  badRequest:
+    responses:
+      400:
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              message: "The server could not understand the request due to invalid syntax."
+
+  notFound:
+    responses:
+      404:
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              message: "The server cannot find the requested resource."
+
+  serverError:
+    responses:
+      500:
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              message: "The server encountered an unexpected condition."
+
+# ─── Resources ────────────────────────────────────────────────────────────────
+
+/books:
+  displayName: Books
+
+  get:
+    displayName: Get book list
+    description: Get book list by pages
+    is: [badRequest, serverError]
+    queryParameters:
+      title:
+        type: string
+        description: To filter book by title
+        required: false
+      author_id:
+        type: integer
+        description: To filter book by author id
+        required: false
+      page:
+        type: integer
+        description: Page number
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
+
+  post:
+    displayName: Create book
+    description: Create new book
+    is: [badRequest]
+    body:
+      application/json:
+        type: BookCreate
+        description: Details of the book to be created.
+    responses:
+      201:
+        body:
+          application/json:
+            type: Book
+
+  /{book_id}:
+    displayName: Book by ID
+    uriParameters:
+      book_id:
+        type: integer
+        description: Path parameter to retrieve books by.
+
+    get:
+      displayName: Get book
+      description: Get book by id
+      is: [badRequest, notFound, serverError]
+      responses:
+        200:
+          body:
+            application/json:
+              type: Book
+
+    patch:
+      displayName: Update book
+      description: Update book info
+      is: [badRequest, notFound, serverError]
+      body:
+        application/json:
+          type: BookPartialUpdate
+      responses:
+        200:
+          body:
+            application/json:
+              type: UpdateBookOk
+
+    delete:
+      displayName: Delete book
+      description: Delete book by id
+      is: [badRequest, notFound, serverError]
+      responses:
+        204:
+          description: The request was successful, but there is no content to return.

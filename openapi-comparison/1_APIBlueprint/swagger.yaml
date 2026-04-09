@@ -1,0 +1,516 @@
+swagger: '2.0'
+info:
+  title: book management system
+  version: ''
+  description: API for book management
+paths:
+  /books:
+    post:
+      responses:
+        '201':
+          description: Book create successfully
+          headers: {}
+          examples:
+            application/json:
+              id: 0
+              title: ''
+              author:
+                id: 0
+                name: ''
+                birth: 0
+                numOfBooks: 0
+              description: ''
+              numOfPages: 0
+              year: 0
+              cover: {}
+          schema:
+            type: object
+            properties:
+              id:
+                type: number
+              title:
+                type: string
+              author:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  birth:
+                    type: number
+                  numOfBooks:
+                    type: number
+              description:
+                type: string
+              numOfPages:
+                type: number
+              year:
+                type: number
+              cover:
+                type: object
+                properties: {}
+            example:
+              id: 0
+              title: ''
+              author:
+                id: 0
+                name: ''
+                birth: 0
+                numOfBooks: 0
+              description: ''
+              numOfPages: 0
+              year: 0
+              cover: {}
+        '400':
+          description: >-
+            The server could not understand the request due to invalid syntax.
+            The client should modify the request and try again.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+      summary: Create book
+      operationId: Create book
+      description: Create new book
+      tags: []
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              author:
+                type: number
+              description:
+                type: string
+              numOfPages:
+                type: number
+              year:
+                type: number
+            example:
+              title: ''
+              author: 0
+              description: ''
+              numOfPages: 0
+              year: 0
+      produces:
+        - application/json
+      consumes:
+        - application/json
+    get:
+      responses:
+        '200':
+          description: A JSON array containing book objects.
+          headers: {}
+          examples:
+            application/json:
+              - id: 0
+                title: ''
+                author:
+                  id: 0
+                  name: ''
+                  birth: 0
+                  numOfBooks: 0
+                description: ''
+                numOfPages: 0
+                year: 0
+                cover: {}
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: number
+                title:
+                  type: string
+                author:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+                    birth:
+                      type: number
+                    numOfBooks:
+                      type: number
+                description:
+                  type: string
+                numOfPages:
+                  type: number
+                year:
+                  type: number
+                cover:
+                  type: object
+                  properties: {}
+            example:
+              - id: 0
+                title: ''
+                author:
+                  id: 0
+                  name: ''
+                  birth: 0
+                  numOfBooks: 0
+                description: ''
+                numOfPages: 0
+                year: 0
+                cover: {}
+        '400':
+          description: >-
+            The server could not understand the request due to invalid syntax.
+            The client should modify the request and try again.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '500':
+          description: >-
+            The server encountered an unexpected condition that prevented it
+            from fulfilling the request. Report the issue to the support team if
+            it persists.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+      summary: Get book list
+      operationId: Get book list
+      description: Get book list by pages
+      tags: []
+      parameters:
+        - name: title
+          in: query
+          description: To filter book by title
+          required: true
+          type: string
+        - name: author_id
+          in: query
+          description: To filter book by author id
+          required: true
+          type: string
+        - name: page
+          in: query
+          description: page
+          required: true
+          type: string
+      produces:
+        - application/json
+      consumes: []
+  /books/{book_id}:
+    get:
+      responses:
+        '200':
+          description: A JSON object containing the book details.
+          headers: {}
+          examples:
+            application/json:
+              id: 0
+              title: ''
+              author:
+                id: 0
+                name: ''
+                birth: 0
+                numOfBooks: 0
+              description: ''
+              numOfPages: 0
+              year: 0
+              cover: {}
+          schema:
+            type: object
+            properties:
+              id:
+                type: number
+              title:
+                type: string
+              author:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  birth:
+                    type: number
+                  numOfBooks:
+                    type: number
+              description:
+                type: string
+              numOfPages:
+                type: number
+              year:
+                type: number
+              cover:
+                type: object
+                properties: {}
+            example:
+              id: 0
+              title: ''
+              author:
+                id: 0
+                name: ''
+                birth: 0
+                numOfBooks: 0
+              description: ''
+              numOfPages: 0
+              year: 0
+              cover: {}
+        '400':
+          description: >-
+            The server could not understand the request due to invalid syntax.
+            The client should modify the request and try again.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '404':
+          description: >-
+            The server cannot find the requested resource. The endpoint may be
+            invalid or the resource may no longer exist.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '500':
+          description: >-
+            The server encountered an unexpected condition that prevented it
+            from fulfilling the request. Report the issue to the support team if
+            it persists.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+      summary: Get book
+      operationId: Get book
+      description: Get book by id
+      tags: []
+      parameters:
+        - name: book_id
+          in: path
+          description: Path parameter to retrieve books by.
+          required: true
+          type: string
+      produces:
+        - application/json
+      consumes: []
+    patch:
+      responses:
+        '200':
+          description: >-
+            The request was successful, and the server has returned the
+            requested resource in the response body.
+          headers: {}
+          examples:
+            application/json:
+              data:
+                id: 0
+                title: ''
+                author:
+                  id: 0
+                  name: ''
+                  birth: 0
+                  numOfBooks: 0
+                description: ''
+                numOfPages: 0
+                year: 0
+                cover: {}
+          schema:
+            type: object
+            properties: {}
+        '400':
+          description: >-
+            The server could not understand the request due to invalid syntax.
+            The client should modify the request and try again.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '404':
+          description: >-
+            The server cannot find the requested resource. The endpoint may be
+            invalid or the resource may no longer exist.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '500':
+          description: >-
+            The server encountered an unexpected condition that prevented it
+            from fulfilling the request. Report the issue to the support team if
+            it persists.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+      summary: Update book
+      operationId: Update book
+      description: Update book info
+      tags: []
+      parameters:
+        - name: book_id
+          in: path
+          description: Path parameter to retrieve books by.
+          required: true
+          type: string
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              author_id:
+                type: number
+              description:
+                type: string
+              numOfPages:
+                type: number
+              year:
+                type: number
+              cover:
+                type: object
+                properties: {}
+            example:
+              title: ''
+              author_id: 0
+              description: ''
+              numOfPages: 0
+              year: 0
+              cover: {}
+      produces:
+        - application/json
+      consumes:
+        - application/json
+    delete:
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          examples: {}
+        '400':
+          description: >-
+            The server could not understand the request due to invalid syntax.
+            The client should modify the request and try again.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '404':
+          description: >-
+            The server cannot find the requested resource. The endpoint may be
+            invalid or the resource may no longer exist.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+        '500':
+          description: >-
+            The server encountered an unexpected condition that prevented it
+            from fulfilling the request. Report the issue to the support team if
+            it persists.
+          headers: {}
+          examples:
+            application/json:
+              message: ''
+          schema:
+            type: object
+            properties: {}
+      summary: Delete book
+      operationId: Delete book
+      description: Delete book by id
+      tags: []
+      parameters:
+        - name: book_id
+          in: path
+          description: Path parameter to retrieve books by.
+          required: true
+          type: string
+      produces:
+        - application/json
+      consumes: []
+definitions:
+  Book:
+    type: object
+    required:
+      - id
+      - title
+      - author
+      - description
+      - numOfPages
+      - year
+      - cover
+    properties:
+      id:
+        type: number
+      title:
+        type: string
+      author:
+        $ref: '#/definitions/Author'
+      description:
+        type: string
+      numOfPages:
+        type: number
+      year:
+        type: number
+      cover:
+        type: object
+        properties: {}
+  Author:
+    type: object
+    properties: {}
+  BookCreate:
+    type: object
+    required:
+      - title
+      - author
+    properties:
+      title:
+        type: string
+      author:
+        type: number
+      description:
+        type: string
+      numOfPages:
+        type: number
+      year:
+        type: number
+  BookPartialUpdate:
+    type: object
+    properties: {}
+securityDefinitions: {}
+tags: []
