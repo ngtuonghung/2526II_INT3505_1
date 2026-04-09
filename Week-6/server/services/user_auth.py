@@ -9,10 +9,11 @@ import jwt
 JWT_SECRET = os.environ.get("JWT_SECRET", "2526II_INT3505_1_SECRET")
 JWT_ALGORITHM = "HS256"
 
+COOKIE_SECURE = False
+
 ACCESS_TOKEN_EXPIRY_MINUTES = 0.5
 REFRESH_TOKEN_EXPIRY_DAYS = 7
 
-ACCESS_COOKIE_NAME = "access_token"
 REFRESH_COOKIE_NAME = "refresh_token"
 
 # Scopes per role
@@ -74,34 +75,21 @@ def set_refresh_cookie(resp, token):
         REFRESH_COOKIE_NAME,
         token,
         httponly=True,
-        secure=True,
+        secure=COOKIE_SECURE,
         samesite="Strict",
         max_age=REFRESH_TOKEN_EXPIRY_DAYS * 86400,
         path="/auth",  # limits cookie scope to /auth routes only
     )
 
 
-def set_access_cookie(resp, token):
-    # Server → client: token delivered via "Set-Cookie" response header
-    # Client → server: browser auto-sends it in "Cookie" request header on every request
-    resp.set_cookie(
-        ACCESS_COOKIE_NAME,
-        token,
-        httponly=True,
-        secure=True,
-        samesite="Strict",
-        max_age=int(ACCESS_TOKEN_EXPIRY_MINUTES * 60),
-        path="/",  # allows access on protected API routes
-    )
-
-
 def require_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Access token read from "Cookie" request header
-        token = request.cookies.get(ACCESS_COOKIE_NAME)
-        if not token:
-            abort(401, description="Missing access token cookie")
+        # Access token read from "Authorization: Bearer <token>" request header
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            abort(401, description="Missing or malformed Authorization header")
+        token = auth_header[len("Bearer "):]
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         except jwt.ExpiredSignatureError:
@@ -146,10 +134,10 @@ def login():
     scope = ROLE_SCOPES[role]
     scope_text = ", ".join(SCOPE_DISPLAY[s] for s in scope)
     message = f"Bạn là {ROLE_DISPLAY[role]}, bạn có quyền: {scope_text}."
+    access_token = issue_access_token(username)
     resp = make_response(
-        jsonify({"message": message, "role": role, "scope": scope}), 200
+        jsonify({"message": message, "role": role, "scope": scope, "access_token": access_token}), 200
     )
-    set_access_cookie(resp, issue_access_token(username))
     set_refresh_cookie(resp, issue_refresh_token(username))
     return resp
 
@@ -167,8 +155,8 @@ def refresh():
         refresh_tokens.pop(token, None)
         abort(401, description="Refresh token expired")
     # Refresh token is not rotated — reused until expiry
-    resp = make_response(jsonify({"message": "Access token refreshed"}), 200)
-    set_access_cookie(resp, issue_access_token(entry["username"]))
+    access_token = issue_access_token(entry["username"])
+    resp = make_response(jsonify({"message": "Access token refreshed", "access_token": access_token}), 200)
     return resp
 
 
@@ -184,18 +172,9 @@ def logout():
         "",
         max_age=0,
         httponly=True,
-        secure=True,
+        secure=COOKIE_SECURE,
         samesite="Strict",
         path="/auth",
-    )
-    resp.set_cookie(
-        ACCESS_COOKIE_NAME,
-        "",
-        max_age=0,
-        httponly=True,
-        secure=True,
-        samesite="Strict",
-        path="/",
     )
     return resp
 

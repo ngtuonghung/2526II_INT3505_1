@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <section id="login-view" class="panel">
+      <h1>Login</h1>
+      <form id="login-form">
+        <label>
+          Username
+          <input id="username" name="username" type="text" autocomplete="username" required />
+        </label>
+        <label>
+          Password
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button id="login-button" type="submit">Login</button>
+      </form>
+    </section>
+
+    <section id="hello-view" class="panel hidden">
+      <h1 id="hello-text">Hello</h1>
+      <p id="role-text"></p>
+      <p id="scope-text"></p>
+      <button id="logout-button" type="button">Logout</button>
+    </section>
+
+    <p id="status" aria-live="polite"></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
