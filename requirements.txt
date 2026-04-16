@@ -4,3 +4,4 @@ PyJWT
 flasgger
 mysql-connector-python
 python-dotenv
+pymongo
