@@ -1,0 +1,432 @@
+{
+  "info": {
+    "_postman_id": "8f1e2c3f-7b08-41fd-8df8-3f7fc2f8f2cb",
+    "name": "Week-8 Product API Test Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - GET /products - list products (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is JSON array', function () {",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType).to.include('application/json');",
+              "  const data = pm.response.json();",
+              "  pm.expect(Array.isArray(data)).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/products"
+      }
+    },
+    {
+      "name": "02 - POST /products - create product (201)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('runSuffix', String(Date.now()));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Created product is valid', function () {",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType).to.include('application/json');",
+              "  const data = pm.response.json();",
+              "  pm.expect(data).to.have.property('id');",
+              "  pm.expect(data.id).to.match(/^[a-fA-F0-9]{24}$/);",
+              "  pm.expect(data).to.have.property('name');",
+              "  pm.expect(data).to.have.property('price');",
+              "  pm.expect(data).to.have.property('stock');",
+              "  pm.expect(data).to.have.property('description');",
+              "  pm.expect(data).to.have.property('createdAt');",
+              "  pm.collectionVariables.set('createdProductId', data.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{productNamePrefix}}-{{runSuffix}}\",\n  \"description\": \"created by Postman\",\n  \"price\": 19.99,\n  \"stock\": 15\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/products"
+      }
+    },
+    {
+      "name": "03 - GET /products/{id} - existing id (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Fetched product matches created id', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.id).to.eql(pm.collectionVariables.get('createdProductId'));",
+              "  pm.expect(data).to.have.property('name');",
+              "  pm.expect(data).to.have.property('price');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/products/{{createdProductId}}"
+      }
+    },
+    {
+      "name": "04 - PUT /products/{id} - update existing (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Updated product fields are returned', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.id).to.eql(pm.collectionVariables.get('createdProductId'));",
+              "  pm.expect(data.name).to.include('updated');",
+              "  pm.expect(data.price).to.eql(25.5);",
+              "  pm.expect(data.stock).to.eql(9);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{productNamePrefix}}-updated-{{runSuffix}}\",\n  \"description\": \"updated by Postman\",\n  \"price\": 25.5,\n  \"stock\": 9\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/products/{{createdProductId}}"
+      }
+    },
+    {
+      "name": "05 - GET /products/{id} - invalid id (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Error is invalid id', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.error).to.eql('invalid id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/products/{{invalidProductId}}"
+      }
+    },
+    {
+      "name": "06 - PUT /products/{id} - invalid id (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Error is invalid id', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.error).to.eql('invalid id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"invalid-update\",\n  \"price\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/products/{{invalidProductId}}"
+      }
+    },
+    {
+      "name": "07 - DELETE /products/{id} - delete existing (204)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 204', function () {",
+              "  pm.response.to.have.status(204);",
+              "});",
+              "",
+              "pm.test('Response body is empty', function () {",
+              "  pm.expect(pm.response.text()).to.eql('');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/products/{{createdProductId}}"
+      }
+    },
+    {
+      "name": "08 - DELETE /products/{id} - deleted id returns 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Error is product not found', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.error).to.eql('product not found');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/products/{{createdProductId}}"
+      }
+    },
+    {
+      "name": "09 - GET /products/{id} - deleted id returns 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Error is product not found', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.error).to.eql('product not found');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/products/{{createdProductId}}"
+      }
+    },
+    {
+      "name": "10 - POST /products - invalid body returns 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Validation error payload exists', function () {",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType).to.include('json');",
+              "  const data = pm.response.json();",
+              "  pm.expect(data).to.be.an('object');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"missing required name and price\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/products"
+      }
+    },
+    {
+      "name": "11 - DELETE /products/{id} - invalid id (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Error is invalid id', function () {",
+              "  const data = pm.response.json();",
+              "  pm.expect(data.error).to.eql('invalid id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/products/{{invalidProductId}}"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "createdProductId",
+      "value": ""
+    },
+    {
+      "key": "runSuffix",
+      "value": ""
+    }
+  ]
+}

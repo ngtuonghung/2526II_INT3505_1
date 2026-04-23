@@ -40,8 +40,8 @@ def products_post(body):
     return jsonify(_serialize(doc)), 201
 
 
-def products_id_get(id):
-    oid = _oid(id)
+def products_id_get(id_):
+    oid = _oid(id_)
     if not oid:
         return jsonify({"error": "invalid id"}), 400
     doc = _col.find_one({"_id": oid})
@@ -50,8 +50,8 @@ def products_id_get(id):
     return jsonify(_serialize(doc)), 200
 
 
-def products_id_put(id, body):
-    oid = _oid(id)
+def products_id_put(id_, body):
+    oid = _oid(id_)
     if not oid:
         return jsonify({"error": "invalid id"}), 400
     update = {k: body[k] for k in ("name", "description", "price", "stock") if k in body}
@@ -65,8 +65,8 @@ def products_id_put(id, body):
     return jsonify(_serialize(doc)), 200
 
 
-def products_id_delete(id):
-    oid = _oid(id)
+def products_id_delete(id_):
+    oid = _oid(id_)
     if not oid:
         return jsonify({"error": "invalid id"}), 400
     result = _col.delete_one({"_id": oid})
