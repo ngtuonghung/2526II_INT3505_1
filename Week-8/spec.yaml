@@ -1,0 +1,150 @@
+openapi: "3.0.3"
+info:
+  title: Product API
+  description: CRUD API for the Product resource, backed by MongoDB.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /products:
+    get:
+      summary: List all products
+      operationId: products_get
+      tags:
+        - products
+      responses:
+        "200":
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      summary: Create a product
+      operationId: products_post
+      tags:
+        - products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: The created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: Invalid input
+
+  /products/{id}:
+    get:
+      summary: Get a product by id
+      operationId: products_id_get
+      tags:
+        - products
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "200":
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+    put:
+      summary: Update a product
+      operationId: products_id_put
+      tags:
+        - products
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "200":
+          description: The updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+    delete:
+      summary: Delete a product
+      operationId: products_id_delete
+      tags:
+        - products
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "204":
+          description: Product deleted
+        "404":
+          description: Product not found
+
+components:
+  parameters:
+    ProductId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: MongoDB ObjectId as a 24-character hex string
+
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "6642a1b2c3d4e5f607080910"
+        name:
+          type: string
+          example: "T-shirt"
+        description:
+          type: string
+          example: "100% cotton t-shirt"
+        price:
+          type: number
+          format: float
+          example: 19.99
+        stock:
+          type: integer
+          default: 0
+          example: 50
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-05-14T10:30:00Z"
+
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        stock:
+          type: integer
+          default: 0

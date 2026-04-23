@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  description: "CRUD API for the Product resource, backed by MongoDB."
+  title: Product API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+paths:
+  /products:
+    get:
+      operationId: products_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Product"
+                type: array
+          description: A list of products
+      summary: List all products
+      tags:
+      - products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+    post:
+      operationId: products_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+          description: The created product
+        "400":
+          description: Invalid input
+      summary: Create a product
+      tags:
+      - products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+  /products/{id}:
+    delete:
+      operationId: products_id_delete
+      parameters:
+      - description: MongoDB ObjectId as a 24-character hex string
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Product deleted
+        "404":
+          description: Product not found
+      summary: Delete a product
+      tags:
+      - products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+    get:
+      operationId: products_id_get
+      parameters:
+      - description: MongoDB ObjectId as a 24-character hex string
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+          description: The product
+        "404":
+          description: Product not found
+      summary: Get a product by id
+      tags:
+      - products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+    put:
+      operationId: products_id_put
+      parameters:
+      - description: MongoDB ObjectId as a 24-character hex string
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+          description: The updated product
+        "404":
+          description: Product not found
+      summary: Update a product
+      tags:
+      - products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+components:
+  parameters:
+    ProductId:
+      description: MongoDB ObjectId as a 24-character hex string
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+  schemas:
+    Product:
+      example:
+        createdAt: 2024-05-14T10:30:00Z
+        price: 19.99
+        name: T-shirt
+        description: 100% cotton t-shirt
+        id: 6642a1b2c3d4e5f607080910
+        stock: 50
+      properties:
+        id:
+          example: 6642a1b2c3d4e5f607080910
+          title: id
+          type: string
+        name:
+          example: T-shirt
+          title: name
+          type: string
+        description:
+          example: 100% cotton t-shirt
+          title: description
+          type: string
+        price:
+          example: 19.99
+          format: float
+          title: price
+          type: number
+        stock:
+          default: 0
+          example: 50
+          title: stock
+          type: integer
+        createdAt:
+          example: 2024-05-14T10:30:00Z
+          format: date-time
+          title: createdAt
+          type: string
+      title: Product
+      type: object
+    ProductInput:
+      example:
+        price: 0.8008282
+        name: name
+        description: description
+        stock: 6
+      properties:
+        name:
+          title: name
+          type: string
+        description:
+          title: description
+          type: string
+        price:
+          format: float
+          title: price
+          type: number
+        stock:
+          default: 0
+          title: stock
+          type: integer
+      required:
+      - name
+      - price
+      title: ProductInput
+      type: object
