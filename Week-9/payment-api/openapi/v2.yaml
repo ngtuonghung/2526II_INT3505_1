@@ -1,0 +1,42 @@
+openapi: 3.0.3
+info:
+  title: Payment API V2
+  version: 2.0.0
+  description: Current v2 payment API using URL versioning.
+servers:
+  - url: http://localhost:5000
+paths:
+  /api/v2/payments:
+    post:
+      tags:
+        - v2
+      summary: Create payment using v2 format
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./common.yaml#/components/schemas/CreatePaymentV2"
+      responses:
+        "201":
+          description: Payment created with v2 response format
+          content:
+            application/json:
+              schema:
+                $ref: "./common.yaml#/components/schemas/PaymentV2"
+  /api/v2/payments/{id}:
+    get:
+      tags:
+        - v2
+      summary: Get payment using v2 format
+      parameters:
+        - $ref: "./common.yaml#/components/parameters/PaymentId"
+      responses:
+        "200":
+          description: Payment found without deprecation headers.
+          content:
+            application/json:
+              schema:
+                $ref: "./common.yaml#/components/schemas/PaymentV2"
+        "404":
+          $ref: "./common.yaml#/components/responses/NotFound"

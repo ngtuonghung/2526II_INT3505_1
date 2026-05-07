@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: Payment API V1
+  version: 1.0.0
+  description: Deprecated v1 payment API using URL versioning.
+servers:
+  - url: http://localhost:5000
+paths:
+  /api/v1/payments:
+    post:
+      tags:
+        - v1
+      summary: Create payment using v1 format
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./common.yaml#/components/schemas/CreatePaymentV1"
+      responses:
+        "201":
+          description: Payment created with v1 response format
+          content:
+            application/json:
+              schema:
+                $ref: "./common.yaml#/components/schemas/PaymentV1"
+  /api/v1/payments/{id}:
+    get:
+      tags:
+        - v1
+      summary: Get payment using v1 format
+      deprecated: true
+      parameters:
+        - $ref: "./common.yaml#/components/parameters/PaymentId"
+      responses:
+        "200":
+          description: Payment found. Response includes deprecation headers.
+          headers:
+            Deprecation:
+              description: Marks this version as deprecated.
+              schema:
+                type: string
+                example: "true"
+            Warning:
+              description: Human-readable warning that v1 is deprecated and has a planned removal date.
+              schema:
+                type: string
+                example: 299 - "API v1 is deprecated and will be removed on 2026-12-31. Please migrate to /api/v2/payments"
+          content:
+            application/json:
+              schema:
+                $ref: "./common.yaml#/components/schemas/PaymentV1"
+        "404":
+          $ref: "./common.yaml#/components/responses/NotFound"

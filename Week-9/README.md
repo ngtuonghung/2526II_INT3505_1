@@ -16,7 +16,10 @@ payment-api/
 │   └── v2/payments.py
 ├── services/
 │   └── payment_service.py
-└── openapi.yaml
+└── openapi/
+    ├── common.yaml
+    ├── v1.yaml
+    └── v2.yaml
 ```
 
 ## Setup
@@ -41,11 +44,15 @@ Server:
 http://localhost:5000
 ```
 
-OpenAPI spec:
+OpenAPI specs:
 
 ```text
-http://localhost:5000/openapi.yaml
+http://localhost:5000/openapi/v1.yaml
+http://localhost:5000/openapi/v2.yaml
+http://localhost:5000/openapi/common.yaml
 ```
+
+`v1.yaml` và `v2.yaml` tách riêng theo version, nhưng cùng `$ref` đến component chung trong `common.yaml`.
 
 ## API Demo
 

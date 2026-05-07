@@ -1,0 +1,91 @@
+components:
+  parameters:
+    PaymentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: pay_1
+  responses:
+    NotFound:
+      description: Payment not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    CreatePaymentV1:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: string
+          example: "100.00"
+        description:
+          type: string
+          example: Book order
+    PaymentV1:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pay_1
+        amount:
+          type: string
+          example: "100.00"
+        description:
+          type: string
+          example: Book order
+        status:
+          type: string
+          example: created
+    CreatePaymentV2:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: number
+          format: float
+          example: 100.0
+        currency:
+          type: string
+          example: USD
+        description:
+          type: string
+          example: Book order
+        idempotency_key:
+          type: string
+          example: abc-123
+    PaymentV2:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pay_1
+        amount:
+          type: number
+          format: float
+          example: 100.0
+        currency:
+          type: string
+          example: USD
+        description:
+          type: string
+          example: Book order
+        status:
+          type: string
+          example: created
+        idempotency_key:
+          type: string
+          nullable: true
+          example: abc-123
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Payment not found

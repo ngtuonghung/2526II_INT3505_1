@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, jsonify, send_from_directory
 
 from routes.v1.payments import payments_v1
@@ -16,7 +18,11 @@ def create_app():
             {
                 "message": "Payment API versioning demo",
                 "versions": ["/api/v1/payments", "/api/v2/payments"],
-                "openapi": "/openapi.yaml",
+                "openapi": {
+                    "v1": "/openapi/v1.yaml",
+                    "v2": "/openapi/v2.yaml",
+                    "common": "/openapi/common.yaml",
+                },
             }
         )
 
@@ -24,9 +30,9 @@ def create_app():
     def health():
         return jsonify({"status": "ok"})
 
-    @app.get("/openapi.yaml")
-    def openapi_spec():
-        return send_from_directory(app.root_path, "openapi.yaml")
+    @app.get("/openapi/<path:filename>")
+    def openapi_spec(filename):
+        return send_from_directory(os.path.join(app.root_path, "openapi"), filename)
 
     return app
 
