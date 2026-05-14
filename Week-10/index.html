@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auth Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f4f5;
+      display: flex;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #18181b;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 10px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #3f3f46;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d4d4d8;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: #6366f1; }
+
+    button {
+      width: 100%;
+      padding: 9px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #4f46e5; }
+
+    .msg {
+      font-size: 0.82rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .msg.ok  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; display: block; }
+    .msg.err { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+
+    .profile-box {
+      font-size: 0.88rem;
+      color: #3f3f46;
+      line-height: 1.7;
+    }
+
+    .profile-box strong { color: #18181b; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      background: #f4f4f5;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #71717a;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      background: #6366f1;
+      color: #fff;
+      border-color: #6366f1;
+    }
+
+    .form { display: none; flex-direction: column; gap: 12px; }
+    .form.active { display: flex; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Auth Demo</h1>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Login</button>
+      <button class="tab" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="form-login" class="form active">
+      <h2>Login</h2>
+      <input id="login-username" type="text" placeholder="Username">
+      <input id="login-password" type="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <div id="login-msg" class="msg"></div>
+    </div>
+
+    <div id="form-register" class="form">
+      <h2>Register</h2>
+      <input id="reg-username" type="text" placeholder="Username">
+      <input id="reg-password" type="password" placeholder="Password (min 8 chars)">
+      <input id="reg-display" type="text" placeholder="Display name">
+      <button onclick="register()">Register</button>
+      <div id="reg-msg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="card" id="profile-card" style="display:none">
+    <h2>Profile</h2>
+    <div class="profile-box" id="profile-box"></div>
+    <button onclick="logout()" style="background:#71717a">Logout</button>
+  </div>
+</div>
+
+<script>
+  const API = "http://localhost:5000";
+  let token = localStorage.getItem("token") || null;
+
+  function switchTab(tab) {
+    document.getElementById("form-login").classList.toggle("active", tab === "login");
+    document.getElementById("form-register").classList.toggle("active", tab === "register");
+    document.querySelectorAll(".tab").forEach((el, i) => {
+      el.classList.toggle("active", (i === 0) === (tab === "login"));
+    });
+  }
+
+  function showMsg(id, text, ok) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = "msg " + (ok ? "ok" : "err");
+  }
+
+  async function login() {
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg("login-msg", data.error, false);
+      token = data.token;
+      localStorage.setItem("token", token);
+      showMsg("login-msg", "Logged in!", true);
+      loadProfile();
+    } catch {
+      showMsg("login-msg", "Cannot reach server", false);
+    }
+  }
+
+  async function register() {
+    const username = document.getElementById("reg-username").value.trim();
+    const password = document.getElementById("reg-password").value;
+    const display_name = document.getElementById("reg-display").value.trim();
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, display_name }),
+      });
+      const data = await res.json();
+      showMsg("reg-msg", data.message || data.error, res.ok);
+    } catch {
+      showMsg("reg-msg", "Cannot reach server", false);
+    }
+  }
+
+  async function loadProfile() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/me`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!res.ok) { logout(); return; }
+      const data = await res.json();
+      document.getElementById("profile-card").style.display = "block";
+      document.getElementById("profile-box").innerHTML =
+        `<div><strong>Username:</strong> ${data.username}</div>` +
+        `<div><strong>Display name:</strong> ${data.display_name}</div>`;
+    } catch {}
+  }
+
+  function logout() {
+    token = null;
+    localStorage.removeItem("token");
+    document.getElementById("profile-card").style.display = "none";
+  }
+
+  if (token) loadProfile();
+</script>
+</body>
+</html>

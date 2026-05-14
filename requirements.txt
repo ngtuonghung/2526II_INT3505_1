@@ -5,3 +5,6 @@ flasgger
 mysql-connector-python
 python-dotenv
 pymongo
+loguru
+flask-limiter
+werkzeug
